@@ -156,10 +156,9 @@ public class TesteService {
                     }
                 variacaoMedia.put(nomeAcao, String.valueOf((variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " , " +
                         String.valueOf(valoresVolume.get(valoresVolume.size() - 1) - valoresVolume.get(valoresVolume.size() - 2)) + " , " +
-                        String.valueOf(valoresVolume.get(0) - valoresVolume.get(1)) + ", " +
                         moda(valores) + ", " +
-                        "Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
-                        "Atual - " + valores.get(valores.size() - 1).toString());
+                        "5D Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
+                        "5D Atual - " + valores.get(valores.size() - 1).toString());
             }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -169,10 +168,9 @@ public class TesteService {
                 if(analiseInicial){
                     variacaoMedia.put(nomeAcao, String.valueOf((variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " , " +
                             String.valueOf(valoresVolume.get(valoresVolume.size() - 1) - valoresVolume.get(valoresVolume.size() - 2)) + " , " +
-                            String.valueOf(valoresVolume.get(0) - valoresVolume.get(1)) + ", " +
                             moda(valores) + ", " +
-                            "Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
-                            "Atual - " + valores.get(valores.size() - 1).toString());
+                            "5D Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
+                            "5D Atual - " + valores.get(valores.size() - 1).toString());
                 }
             }
             } catch (IOException | InterruptedException e) {
