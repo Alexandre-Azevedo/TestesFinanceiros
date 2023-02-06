@@ -3,8 +3,6 @@ package io.reflectoring.financastestefinal.testes.service;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -138,6 +136,8 @@ public class TesteService {
                     }
                 }
 
+                Double variancia = variancia(valores, (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size());
+
                 List<Double> variacao = new ArrayList<>();
                 AtomicReference<Double> aux = new AtomicReference<>(null);
                 valores.stream().forEach(x -> {
@@ -156,7 +156,8 @@ public class TesteService {
                     }
                 variacaoMedia.put(nomeAcao, String.valueOf((variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " , " +
                         String.valueOf(valoresVolume.get(valoresVolume.size() - 1) - valoresVolume.get(valoresVolume.size() - 2)) + " , " +
-                        moda(valores) + ", " +
+                        "5D variancia - "+ variancia + ", " +
+                        "5D "+moda(valores) + ", " +
                         "5D Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
                         "5D Atual - " + valores.get(valores.size() - 1).toString());
             }
@@ -168,7 +169,9 @@ public class TesteService {
                 if(analiseInicial){
                     variacaoMedia.put(nomeAcao, String.valueOf((variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " , " +
                             String.valueOf(valoresVolume.get(valoresVolume.size() - 1) - valoresVolume.get(valoresVolume.size() - 2)) + " , " +
-                            moda(valores) + ", " +
+                            "5D variancia - "+ variancia + ", " +
+                            "5D isNormal - "+variancia(valores, (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + ", " +
+                            "5D "+moda(valores) + ", " +
                             "5D Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
                             "5D Atual - " + valores.get(valores.size() - 1).toString());
                 }
@@ -192,7 +195,9 @@ public class TesteService {
         });
         retorno += moda.get().toString() + "("+(quantidade.get()/valores.size())*100+"%)";
         return retorno;
-    }public Double modaValue(List<Double> valores){
+    }
+
+    public Double modaValue(List<Double> valores){
         AtomicReference<Integer> quantidade = new AtomicReference<>(0);
         AtomicReference<Double> moda = new AtomicReference<>(0.0d);
         valores.stream().forEach(x -> {
@@ -202,6 +207,15 @@ public class TesteService {
         });
         return moda.get();
     }
+
+    public Double variancia(List<Double> valores, Double media){
+        AtomicReference<Double> valorMenosMediaAcumuladoSqt = new AtomicReference<>(0d);
+        valores.stream().forEach(x -> {
+            valorMenosMediaAcumuladoSqt.set(Math.pow(x - media, 2));
+        });
+        return Math.sqrt(valorMenosMediaAcumuladoSqt.get()/valores.size());
+    }
+
 
     /*public String headShoulderReversePattern(List<Double> valores){
         String retorno = "HSR - FALSE";
