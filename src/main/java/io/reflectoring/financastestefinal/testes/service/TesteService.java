@@ -271,7 +271,9 @@ public class TesteService {
                             "5D Atual: " +  valores.get(valores.size() - 1).toString()+" | "+
                             headShoulderPattern(valores)+ " | "+
                             headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores));
+                            cunhaDeBaixaPattern(valores)+" | "+
+                            trinaguloDeReversaoPattern(valores)+" | "+
+                            cestoBasePattern(valores));
                 }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -283,7 +285,9 @@ public class TesteService {
                             "5D Atual: " +  valores.get(valores.size() - 1).toString()+" | "+
                             headShoulderPattern(valores)+ " | "+
                             headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores));
+                            cunhaDeBaixaPattern(valores)+" | "+
+                            trinaguloDeReversaoPattern(valores)+" | "+
+                            cestoBasePattern(valores));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -371,8 +375,10 @@ public class TesteService {
                         "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
                         horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
                         headShoulderReversePattern(valores)+" | "+
-                        cunhaDeBaixaPattern(valores));
-            }
+                        cunhaDeBaixaPattern(valores)+" | "+
+                        trinaguloDeReversaoPattern(valores)+" | "+
+                        cestoBasePattern(valores));
+                }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
                                             modaValue(valores).doubleValue() : Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
@@ -388,7 +394,9 @@ public class TesteService {
                             "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
                             horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
                             headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores));
+                            cunhaDeBaixaPattern(valores)+" | "+
+                            trinaguloDeReversaoPattern(valores)+" | "+
+                            cestoBasePattern(valores));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -476,6 +484,53 @@ public class TesteService {
         }
 
         return "CUNHA DE BAIXA - NÃO ENCONTRADO";
+    }
+
+    public String trinaguloDeReversaoPattern(List<Double> valores){
+        int i = valores.size() -1;
+        int aux = 1;
+        while(i - 9*aux > 0){
+            if((valores.get(i) < valores.get(i-1*aux)) && (valores.get(i-1*aux) > valores.get(i-2*aux)) && (valores.get(i-2*aux) < valores.get(i-3*aux)) && (valores.get(i-3*aux) > valores.get(i-4*aux)) && (valores.get(i-4*aux) < valores.get(i-5*aux)) &&
+                    (valores.get(i-5*aux) > valores.get(i-6*aux)) && (valores.get(i-6*aux) < valores.get(i-7*aux)) && (valores.get(i-7*aux) > valores.get(i-8*aux))
+                    && ((valores.get(i) > valores.get(i-2*aux)) && (valores.get(i-2*aux) > valores.get(i-4*aux)) && (valores.get(i-4*aux) > valores.get(i-6*aux)) && (valores.get(i-6*aux) > valores.get(i-8*aux)))){
+                return "TRI. REV. - BAIXA("+aux+")";
+            }
+            aux++;
+        }
+
+        return "TRI. REV. - NÃO ENCONTRADO";
+    }
+    public String cestoBasePattern(List<Double> valores){
+        int i = valores.size() -1;
+        Double valorAtual = valores.get(i);
+        Integer indexOcorrenciaAnterior = null;
+        int quantidadeElementos = 1;
+        for(int j = i-1; j>-1; j--){
+            quantidadeElementos++;
+            if(valores.get(j).equals(valorAtual)){
+                indexOcorrenciaAnterior = j;
+            }
+        }
+        if(quantidadeElementos != 1 && indexOcorrenciaAnterior != null){
+            int aux = 1;
+            while (aux < quantidadeElementos-1){
+                if(quantidadeElementos%aux == 0){
+                    boolean maiorMenor = false;
+                    for(int j = indexOcorrenciaAnterior; j < valores.size() -1; j += 2){
+                        if(valores.get(j) < valores.get(j+1)){
+                            maiorMenor = true;
+                        }
+                    }
+                    if(maiorMenor){
+                        return "CESTO BASE - ALTA("+indexOcorrenciaAnterior+","+aux+","+(valores.size() -1)+")";
+                    }
+                    aux++;
+                }
+                aux = 1;
+            }
+        }
+
+        return "CESTO BASE - NÃO ENCONTRADO";
     }
 
 
