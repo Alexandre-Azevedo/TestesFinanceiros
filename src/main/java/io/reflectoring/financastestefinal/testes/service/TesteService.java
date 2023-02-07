@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Service
@@ -136,8 +137,9 @@ public class TesteService {
                     }
                 }
 
-                Double variancia = variancia(valores, (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size());
+               
 
+                
                 List<Double> variacao = new ArrayList<>();
                 AtomicReference<Double> aux = new AtomicReference<>(null);
                 valores.stream().forEach(x -> {
@@ -148,6 +150,8 @@ public class TesteService {
                 });
                 Double valorModa = modaValue(valores).doubleValue();
                 Double valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
+                Double variancia = variancia(valores, valorMedia);
+                Double isNormal = isNormal(valores, variancia, valorMedia);
 
                 if(!analiseInicial) {
                     if((valorModa < valores.get(valores.size() - 1) && valores.get(valores.size() - 1) < valorMedia) ||
@@ -157,6 +161,7 @@ public class TesteService {
                 variacaoMedia.put(nomeAcao, String.valueOf((variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " , " +
                         String.valueOf(valoresVolume.get(valoresVolume.size() - 1) - valoresVolume.get(valoresVolume.size() - 2)) + " , " +
                         "5D variancia - "+ variancia + ", " +
+                        "5D isNormal - "+isNormal(valores, variancia, valorMedia) + ", " +
                         "5D "+moda(valores) + ", " +
                         "5D Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
                         "5D Atual - " + valores.get(valores.size() - 1).toString());
@@ -170,7 +175,7 @@ public class TesteService {
                     variacaoMedia.put(nomeAcao, String.valueOf((variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " , " +
                             String.valueOf(valoresVolume.get(valoresVolume.size() - 1) - valoresVolume.get(valoresVolume.size() - 2)) + " , " +
                             "5D variancia - "+ variancia + ", " +
-                            "5D isNormal - "+variancia(valores, (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + ", " +
+                            "5D isNormal - "+isNormal(valores, variancia, valorMedia) + ", " +
                             "5D "+moda(valores) + ", " +
                             "5D Media - " + (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size() + ", " +
                             "5D Atual - " + valores.get(valores.size() - 1).toString());
@@ -214,6 +219,11 @@ public class TesteService {
             valorMenosMediaAcumuladoSqt.set(Math.pow(x - media, 2));
         });
         return Math.sqrt(valorMenosMediaAcumuladoSqt.get()/valores.size());
+    }
+    
+    public Double isNormal(List<Double> valores, Double variancia, Double media){
+        List<Double> valoresDentroDaNormal = valores.stream().filter(x -> x > media - variancia && x < media + variancia).collect((Collectors.toList()));
+        return Double.valueOf(valoresDentroDaNormal.size()/valores.size())*100;
     }
 
 
