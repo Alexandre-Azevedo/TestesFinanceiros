@@ -523,16 +523,22 @@ public class TesteService {
             int aux = 1;
             while (aux < quantidadeElementos-1){
                 if(quantidadeElementos%aux == 0){
-                    boolean maiorMenor = false;
+                    int quantidadeSubida = 0;
+                    int quantidadeDescida = 0;
                     for(int j = indexOcorrenciaAnterior; j < valores.size() - 1; j+=aux){
                         if(	j+aux < i &&
-                    		valores.get(j).doubleValue() < valores.get(j+aux).doubleValue() && 
-                    		valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() && valores.get(j).doubleValue() <= valorAtual.doubleValue() &&
-                    		valores.get(j+aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() && valores.get(j+aux).doubleValue() <= valorAtual.doubleValue()){
-                            maiorMenor = true;
+                    		valores.get(j).doubleValue() < valores.get(j+aux).doubleValue() &&
+                            (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
+                            (valores.get(j+aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j+aux).doubleValue() <= valorAtual.doubleValue())){
+                            quantidadeSubida++;
+                        } else if(  j+aux < i &&
+                                    valores.get(j).doubleValue() > valores.get(j+aux).doubleValue() &&
+                                    (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
+                                    (valores.get(j+aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j+aux).doubleValue() <= valorAtual.doubleValue())) {
+                            quantidadeDescida++;
                         }
                     }
-                    if(maiorMenor){
+                    if(quantidadeSubida > 0 && quantidadeDescida > 0){
                         return "CESTO BASE - ALTA("+data.get(indexOcorrenciaAnterior)+","+aux+","+data.get(i+1)+")";
                     }
                 }

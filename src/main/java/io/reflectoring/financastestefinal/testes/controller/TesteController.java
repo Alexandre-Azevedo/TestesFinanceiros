@@ -41,11 +41,11 @@ public class TesteController {
     @Autowired
     private TesteService testeService;
 
-    @GetMapping("/analise")
-    public void google(){
+    @GetMapping("/analise/{endpointAvaliado}")
+    public void google(@PathVariable(value = "endpointAvaliado") String endpointAvaliado){
             var client = HttpClient.newHttpClient();
             var requestMaisAtivos = HttpRequest.newBuilder(
-                            URI.create("https://www.google.com/finance/markets/most-active"))
+                            URI.create("https://www.google.com/finance/markets/"+endpointAvaliado))
                     .header("accept", "application/json")
                     .build();
             /*var requestMaiorGanho = HttpRequest.newBuilder(
