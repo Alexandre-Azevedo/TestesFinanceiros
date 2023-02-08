@@ -226,15 +226,18 @@ public class TesteService {
 
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
+                List<String> data = new ArrayList<>();
                 List<Integer> valoresVolume = new ArrayList<>();
                 for(int i =  quartaParte[25].substring(1).equals("-10800]]") ? 26:25; i < quartaParte.length; i += 15){
                     valores.add(Double.valueOf(quartaParte[i].substring(1)));
                     if(quartaParte[i+6].contains("]]")){
                         valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }else{
                         valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }
                 }
 
@@ -273,7 +276,7 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores));
+                            cestoBasePattern(valores, data));
                 }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -287,7 +290,7 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores));
+                            cestoBasePattern(valores, data));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -322,18 +325,22 @@ public class TesteService {
 
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
+                List<String> data = new ArrayList<>();
                 List<Integer> valoresVolume = new ArrayList<>();
                 for(int i =  quartaParte[8].substring(1).equals("-10800]]") ? 9:10; i < quartaParte.length; i += 15){
                     valores.add(Double.valueOf(quartaParte[i].substring(1)));
                     if(quartaParte[i+6].contains("[]]")){
                         valoresVolume.add(Integer.valueOf("0"));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     } else if(quartaParte[i+6].contains("]]")){
                         valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }else{
                         valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }
                 }
 
@@ -377,7 +384,7 @@ public class TesteService {
                         headShoulderReversePattern(valores)+" | "+
                         cunhaDeBaixaPattern(valores)+" | "+
                         trinaguloDeReversaoPattern(valores)+" | "+
-                        cestoBasePattern(valores));
+                        cestoBasePattern(valores, data));
                 }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -396,7 +403,7 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores));
+                            cestoBasePattern(valores, data));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -500,15 +507,16 @@ public class TesteService {
 
         return "TRI. REV. - NÃO ENCONTRADO";
     }
-    public String cestoBasePattern(List<Double> valores){
-        int i = valores.size() -1;
+    public String cestoBasePattern(List<Double> valores, List<String> data){
+        int i = valores.size() - 2;
         Double valorAtual = valores.get(i);
         Integer indexOcorrenciaAnterior = null;
         int quantidadeElementos = 1;
         for(int j = i-1; j>-1; j--){
             quantidadeElementos++;
-            if(valores.get(j).equals(valorAtual)){
+            if(valores.get(j).doubleValue() > valorAtual.doubleValue()){
                 indexOcorrenciaAnterior = j;
+                break;
             }
         }
         if(quantidadeElementos != 1 && indexOcorrenciaAnterior != null){
@@ -516,17 +524,19 @@ public class TesteService {
             while (aux < quantidadeElementos-1){
                 if(quantidadeElementos%aux == 0){
                     boolean maiorMenor = false;
-                    for(int j = indexOcorrenciaAnterior; j < valores.size() -1; j += 2){
-                        if(valores.get(j) < valores.get(j+1)){
+                    for(int j = indexOcorrenciaAnterior; j < valores.size() - 1; j+=aux){
+                        if(	j+aux < i &&
+                    		valores.get(j).doubleValue() < valores.get(j+aux).doubleValue() && 
+                    		valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() && valores.get(j).doubleValue() <= valorAtual.doubleValue() &&
+                    		valores.get(j+aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() && valores.get(j+aux).doubleValue() <= valorAtual.doubleValue()){
                             maiorMenor = true;
                         }
                     }
                     if(maiorMenor){
-                        return "CESTO BASE - ALTA("+indexOcorrenciaAnterior+","+aux+","+(valores.size() -1)+")";
+                        return "CESTO BASE - ALTA("+data.get(indexOcorrenciaAnterior)+","+aux+","+data.get(i+1)+")";
                     }
-                    aux++;
                 }
-                aux = 1;
+                aux++;
             }
         }
 
