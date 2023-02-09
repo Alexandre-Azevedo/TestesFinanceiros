@@ -130,15 +130,18 @@ public class TesteService {
 
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
+                List<String> data = new ArrayList<>();
                 List<Integer> valoresVolume = new ArrayList<>();
                 for(int i =  quartaParte[25].substring(1).equals("-10800]]") ? 26:25; i < quartaParte.length; i += 15){
                     valores.add(Double.valueOf(quartaParte[i].substring(1)));
                     if(quartaParte[i+6].contains("]]")){
                         valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }else{
                         valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }
                 }
 
@@ -171,13 +174,18 @@ public class TesteService {
                         (valorModa > valores.get(valores.size() - 1) && valores.get(valores.size() - 1) > valorMedia)){
                         System.out.println(nomeAcao+" - possibilidade de venda");
                     }*/
-                variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                        String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
-                        "5D variancia: "+ String.format("%.4f", variancia) + " | " +
-                        "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
-                        "5D "+ moda(valores) + " | " +
-                        "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
-                        "5D Atual: " +  valores.get(valores.size() - 1).toString());
+                    variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
+                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
+                            "5D variancia: "+ String.format("%.4f", variancia) + " | " +
+                            "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
+                            "5D "+ moda(valores) + " | " +
+                            "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
+                            "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
+                            horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
+                            headShoulderReversePattern(valores)+" | "+
+                            cunhaDeBaixaPattern(valores)+" | "+
+                            trinaguloDeReversaoPattern(valores)+" | "+
+                            cestoBasePattern(valores, data));
             }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -187,11 +195,16 @@ public class TesteService {
                 if(analiseInicial){
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
                             String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
-                            "5D variancia: "+  String.format("%.4f", variancia) + " | " +
+                            "5D variancia: "+ String.format("%.4f", variancia) + " | " +
                             "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
-                            "5D "+  moda(valores) + " | " +
+                            "5D "+ moda(valores) + " | " +
                             "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
-                            "5D Atual: " +  valores.get(valores.size() - 1).toString());
+                            "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
+                            horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
+                            headShoulderReversePattern(valores)+" | "+
+                            cunhaDeBaixaPattern(valores)+" | "+
+                            trinaguloDeReversaoPattern(valores)+" | "+
+                            cestoBasePattern(valores, data));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -525,7 +538,11 @@ public class TesteService {
                 if(quantidadeElementos%aux == 0){
                     int quantidadeSubida = 0;
                     int quantidadeDescida = 0;
+                    Double minValue = 0d;
                     for(int j = indexOcorrenciaAnterior; j < valores.size() - 1; j+=aux){
+                        if((valores.get(j).doubleValue() < minValue.doubleValue()) || minValue.doubleValue() == 0d){
+                            minValue = valores.get(j);
+                        }
                         if(	j+aux < i &&
                     		valores.get(j).doubleValue() < valores.get(j+aux).doubleValue() &&
                             (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
@@ -538,7 +555,7 @@ public class TesteService {
                             quantidadeDescida++;
                         }
                     }
-                    if(quantidadeSubida > 0 && quantidadeDescida > 0){
+                    if(quantidadeSubida > 0 && quantidadeDescida > 0 && minValue.doubleValue() < valorAtual.doubleValue()){
                         return "CESTO BASE - ALTA("+data.get(indexOcorrenciaAnterior)+","+aux+","+data.get(i+1)+")";
                     }
                 }
