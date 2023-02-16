@@ -185,7 +185,9 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data));
+                            cestoBasePattern(valores, data)+ "\n"+
+                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            predicaoPolinomialLagrange(variacao, variacaoVolume));
             }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -204,7 +206,9 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data));
+                            cestoBasePattern(valores, data)+ "\n"+
+                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            predicaoPolinomialLagrange(variacao, variacaoVolume));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -289,7 +293,9 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data));
+                            cestoBasePattern(valores, data)+"\n"+
+                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            predicaoPolinomialLagrange(variacao, variacaoVolume));
                 }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -303,7 +309,9 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data));
+                            cestoBasePattern(valores, data)+"\n"+
+                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            predicaoPolinomialLagrange(variacao, variacaoVolume));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -397,7 +405,9 @@ public class TesteService {
                         headShoulderReversePattern(valores)+" | "+
                         cunhaDeBaixaPattern(valores)+" | "+
                         trinaguloDeReversaoPattern(valores)+" | "+
-                        cestoBasePattern(valores, data));
+                        cestoBasePattern(valores, data) + "\n"+
+                        predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                        predicaoPolinomialLagrange(variacao, variacaoVolume));
                 }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -416,7 +426,9 @@ public class TesteService {
                             headShoulderReversePattern(valores)+" | "+
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data));
+                            cestoBasePattern(valores, data)+ "\n"+
+                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            predicaoPolinomialLagrange(variacao, variacaoVolume));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -564,6 +576,49 @@ public class TesteService {
         }
 
         return "CESTO BASE - NÃO ENCONTRADO";
+    }
+
+    public String predicaoPolinomial(List<Double> variacaoValores, List<Integer> variacaoVolume){
+        int quantZeros = variacaoVolume.stream().filter(x -> x.equals(0)).collect(Collectors.toList()).size();
+        quantZeros = (variacaoVolume.get(variacaoVolume.size()-1)).equals(0) ? (quantZeros-1) : quantZeros;
+        List<Double> zerosFunc = new ArrayList<>();
+        if(quantZeros > 0){
+            for(int i = 0; i < variacaoVolume.size(); i++){
+                if(variacaoVolume.get(i).equals(0) && i+1 < variacaoVolume.size()-1){
+                    zerosFunc.add(variacaoValores.get(i+1));
+                }
+            }
+            Double valorAtual = Double.valueOf(1.0);
+            Double valorImediatamenteAnterior = Double.valueOf(1.0);
+            for (int i = 0; i < zerosFunc.size(); i++){
+                valorAtual = valorAtual*(variacaoValores.get(variacaoValores.size()-1) - zerosFunc.get(i));
+                valorImediatamenteAnterior = valorImediatamenteAnterior*((variacaoValores.get(variacaoValores.size()-1)-0.000000000000001) - zerosFunc.get(i));
+            }
+            return "PREDICAO POLINOMIAL - ("+(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+") ("+String.valueOf(quantZeros)+")";
+        }else{
+            return "PREDICAO POLINOMIAL - NÃO ENCONTRADO ("+String.valueOf(quantZeros)+")";
+        }
+    }
+    public String predicaoPolinomialLagrange(List<Double> variacaoValores, List<Integer> variacaoVolume){
+        Double valorAtual = Double.valueOf(0.0);
+        Double valorImediatamenteAnterior = Double.valueOf(0.0);
+        for(int i = 0; i < variacaoVolume.size(); i++){
+            if(i+1 < variacaoVolume.size()-1){
+                valorAtual += lagrange(variacaoValores.get(variacaoValores.size()-1), variacaoValores , i+1)*variacaoVolume.get(i);
+                valorImediatamenteAnterior += lagrange(variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, variacaoValores.subList(1, variacaoValores.size()) , i)*variacaoVolume.get(i);
+            }
+        }
+        return "PREDICAO POLINOMIAL LAGRANGE - ("+(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
+    }
+
+    private Double lagrange(Double valorXAtual, List<Double> variacaoValores, int index) {
+        Double retorno = Double.valueOf(1.0);
+        for(int i = 0; i < variacaoValores.size(); i++){
+            if(i != index){
+                retorno = retorno*((valorXAtual - variacaoValores.get(i))/(variacaoValores.get(index) - variacaoValores.get(i)));
+            }
+        }
+        return retorno;
     }
 
 
