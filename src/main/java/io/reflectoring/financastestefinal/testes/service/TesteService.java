@@ -584,8 +584,8 @@ public class TesteService {
         List<Double> zerosFunc = new ArrayList<>();
         if(quantZeros > 0){
             for(int i = 0; i < variacaoVolume.size(); i++){
-                if(variacaoVolume.get(i).equals(0) && i+1 < variacaoVolume.size()-1){
-                    zerosFunc.add(variacaoValores.get(i+1));
+                if(variacaoVolume.get(i).equals(0)){
+                    zerosFunc.add(variacaoValores.get(i));
                 }
             }
             Double valorAtual = Double.valueOf(1.0);
@@ -603,10 +603,8 @@ public class TesteService {
         Double valorAtual = Double.valueOf(0.0);
         Double valorImediatamenteAnterior = Double.valueOf(0.0);
         for(int i = 0; i < variacaoVolume.size(); i++){
-            if(i+1 < variacaoVolume.size()-1){
-                valorAtual += lagrange(variacaoValores.get(variacaoValores.size()-1), variacaoValores , i+1)*variacaoVolume.get(i);
-                valorImediatamenteAnterior += lagrange(variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, variacaoValores.subList(1, variacaoValores.size()) , i)*variacaoVolume.get(i);
-            }
+            valorAtual += lagrange(variacaoValores.get(variacaoValores.size()-1), variacaoValores, i)*variacaoVolume.get(i);
+            valorImediatamenteAnterior += lagrange(variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, variacaoValores, i)*variacaoVolume.get(i);
         }
         return "PREDICAO POLINOMIAL LAGRANGE - ("+(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
     }
