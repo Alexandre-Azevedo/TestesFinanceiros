@@ -187,7 +187,8 @@ public class TesteService {
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+ "\n"+
                             predicaoPolinomial(variacao, variacaoVolume)+" | "+
-                            predicaoPolinomialLagrange(variacao, variacaoVolume));
+                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
+                            predicaoPolinomialNewton(variacao, variacaoVolume));
             }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -208,7 +209,8 @@ public class TesteService {
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+ "\n"+
                             predicaoPolinomial(variacao, variacaoVolume)+" | "+
-                            predicaoPolinomialLagrange(variacao, variacaoVolume));
+                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
+                            predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -295,7 +297,8 @@ public class TesteService {
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+"\n"+
                             predicaoPolinomial(variacao, variacaoVolume)+" | "+
-                            predicaoPolinomialLagrange(variacao, variacaoVolume));
+                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
+                            predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -311,7 +314,8 @@ public class TesteService {
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+"\n"+
                             predicaoPolinomial(variacao, variacaoVolume)+" | "+
-                            predicaoPolinomialLagrange(variacao, variacaoVolume));
+                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
+                            predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -336,6 +340,14 @@ public class TesteService {
                     .header("accept", "application/json")
                     .build();
             HttpResponse<String> response = null;
+            List<Integer> testeVolume = new ArrayList<>();
+            testeVolume.add(Integer.valueOf(4));
+            testeVolume.add(Integer.valueOf(1));
+            testeVolume.add(Integer.valueOf(-1));
+            List<Double> testeValores = new ArrayList<>();
+            testeValores.add(Double.valueOf(-1));
+            testeValores.add(Double.valueOf(0));
+            testeValores.add(Double.valueOf(2));
             try {
                 response = client.send(requestMaisAtivos, HttpResponse.BodyHandlers.ofString());
                 String resposta = response.body();
@@ -394,7 +406,7 @@ public class TesteService {
                         (valorModa > valores.get(valores.size() - 1) && valores.get(valores.size() - 1) > valorMedia)){
                         System.out.println(nomeAcao+" - possibilidade de venda");
                     }*/
-                variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
+                    variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
                         String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
                         "5D variancia: "+ String.format("%.4f", variancia) + " | " +
                         "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
@@ -407,7 +419,8 @@ public class TesteService {
                         trinaguloDeReversaoPattern(valores)+" | "+
                         cestoBasePattern(valores, data) + "\n"+
                         predicaoPolinomial(variacao, variacaoVolume)+" | "+
-                        predicaoPolinomialLagrange(variacao, variacaoVolume));
+                        predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
+                        predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -428,7 +441,8 @@ public class TesteService {
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+ "\n"+
                             predicaoPolinomial(variacao, variacaoVolume)+" | "+
-                            predicaoPolinomialLagrange(variacao, variacaoVolume));
+                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
+                            predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
             }
             } catch (IOException | InterruptedException e) {
@@ -594,7 +608,7 @@ public class TesteService {
                 valorAtual = valorAtual*(variacaoValores.get(variacaoValores.size()-1) - zerosFunc.get(i));
                 valorImediatamenteAnterior = valorImediatamenteAnterior*((variacaoValores.get(variacaoValores.size()-1)-0.000000000000001) - zerosFunc.get(i));
             }
-            return "PREDICAO POLINOMIAL - ("+(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+") ("+String.valueOf(quantZeros)+")";
+            return "PREDICAO POLINOMIAL - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+") ("+String.valueOf(quantZeros)+")";
         }else{
             return "PREDICAO POLINOMIAL - NÃO ENCONTRADO ("+String.valueOf(quantZeros)+")";
         }
@@ -606,7 +620,7 @@ public class TesteService {
             valorAtual += lagrange(variacaoValores.get(variacaoValores.size()-1), variacaoValores, i)*variacaoVolume.get(i);
             valorImediatamenteAnterior += lagrange(variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, variacaoValores, i)*variacaoVolume.get(i);
         }
-        return "PREDICAO POLINOMIAL LAGRANGE - ("+(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
+        return "PREDICAO POLINOMIAL LAGRANGE - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
     }
 
     private Double lagrange(Double valorXAtual, List<Double> variacaoValores, int index) {
@@ -617,6 +631,41 @@ public class TesteService {
             }
         }
         return retorno;
+    }
+
+    public String predicaoPolinomialNewton(List<Double> variacaoValores, List<Integer> variacaoVolume){
+        Double valorAtual = Double.valueOf(variacaoVolume.get(0));
+        Double valorImediatamenteAnterior = Double.valueOf(variacaoVolume.get(0));
+        for(int i = 0; i < variacaoVolume.size(); i++){
+            valorAtual += newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1), i);
+            valorImediatamenteAnterior += newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, i);
+        }
+        return "PREDICAO POLINOMIAL NEWTON - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
+    }
+
+    public Double multiplicador(List<Double> variacaoValores, Double valorXAtual, int index){
+        Double retorno = Double.valueOf(1);
+        if(index == 0){
+            return retorno;
+        }
+        for(int i = 0; i < index; i++){
+            retorno = retorno*(valorXAtual - variacaoValores.get(i));
+        }
+        return retorno;
+    }
+    public Double newton(List<Double> variacaoValores, List<Integer> variacaoVolumes, int index){
+        if(index == 0){
+            return Double.valueOf(variacaoVolumes.get(0));
+        }else{
+            Double valorFinal = variacaoValores.get(variacaoValores.size() - 1);
+            Double valorInicial = variacaoValores.get(0);
+            List<Double> novaVariacaoValoresDireita = variacaoValores.subList(0, variacaoValores.size()-1);
+            List<Integer> novaVariacaoVolumesDireita = variacaoVolumes.subList(0, variacaoVolumes.size()-1);
+            List<Double> novaVariacaoValoresEsquerda = variacaoValores.subList(1, variacaoValores.size());
+            List<Integer> novaVariacaoVolumesEsquerda = variacaoVolumes.subList(1, variacaoVolumes.size());
+            return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1) - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1))/
+                    (valorFinal - valorInicial));
+        }
     }
 
 
