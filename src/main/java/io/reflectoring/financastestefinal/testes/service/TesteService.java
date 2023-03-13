@@ -159,7 +159,7 @@ public class TesteService {
                 List<Integer> variacaoVolume = new ArrayList<>();
                 AtomicReference<Integer> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
-                    if(auxVolume.get() != null){
+                    if(auxVolume.get() != null && auxVolume.get() != 0){
                         variacaoVolume.add(((x/ auxVolume.get())-1)*100);
                     }
                     auxVolume.set(x);
@@ -274,7 +274,7 @@ public class TesteService {
                 List<Integer> variacaoVolume = new ArrayList<>();
                 AtomicReference<Integer> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
-                    if(auxVolume.get() != null){
+                    if(auxVolume.get() != null && auxVolume.get() != 0){
                         variacaoVolume.add(((x/ auxVolume.get())-1)*100);
                     }
                     auxVolume.set(x);
@@ -335,8 +335,9 @@ public class TesteService {
                 nomeAcao = nm.split(">")[4];
             }
             var client = HttpClient.newHttpClient();
+
             var requestMaisAtivos = HttpRequest.newBuilder(
-                            URI.create("https://www.google.com/finance/quote/"+nomeAcao+":BVMF?window=5D"))
+                            URI.create("https://www.google.com/finance/quote/"+(!nomeAcao.equals("BTC-USD") && !nomeAcao.equals("ETH-USD") ? nomeAcao+":BVMF" : nomeAcao)+"?window=5D"))
                     .header("accept", "application/json")
                     .build();
             HttpResponse<String> response = null;
@@ -360,20 +361,39 @@ public class TesteService {
                 List<String> horas = new ArrayList<>();
                 List<String> data = new ArrayList<>();
                 List<Integer> valoresVolume = new ArrayList<>();
-                for(int i =  quartaParte[8].substring(1).equals("-10800]]") ? 9:10; i < quartaParte.length; i += 15){
-                    valores.add(Double.valueOf(quartaParte[i].substring(1)));
-                    if(quartaParte[i+6].contains("[]]")){
-                        valoresVolume.add(Integer.valueOf("0"));
-                        horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                    } else if(quartaParte[i+6].contains("]]")){
-                        valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
-                        horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                    }else{
-                        valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
-                        horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                if(nomeAcao.equals("BTC-USD") || nomeAcao.equals("ETH-USD")){
+                    for(int i =  8; i < quartaParte.length - 15; i += 15){
+                        valores.add(Double.valueOf(quartaParte[i].substring(1)));
+                        if(quartaParte[i-1].contains("[]]")){
+                            valoresVolume.add(Integer.valueOf(quartaParte[i-7] + quartaParte[i-6]));
+                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                        } else if(quartaParte[i-1].contains("]]")){
+                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
+                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                        }else{
+                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
+                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                        }
+                    }
+                }else{
+                    for(int i =  quartaParte[8].substring(1).equals("-10800]]") ? 9:10; i < quartaParte.length; i += 15){
+                        valores.add(Double.valueOf(quartaParte[i].substring(1)));
+                        if(quartaParte[i+6].contains("[]]")){
+                            valoresVolume.add(Integer.valueOf("0"));
+                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                        } else if(quartaParte[i+6].contains("]]")){
+                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
+                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                        }else{
+                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
+                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
+                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                        }
                     }
                 }
 
@@ -391,8 +411,8 @@ public class TesteService {
                 List<Integer> variacaoVolume = new ArrayList<>();
                 AtomicReference<Integer> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
-                    if(auxVolume.get() != null){
-                        variacaoVolume.add(((x/ auxVolume.get())-1)*100);
+                    if(auxVolume.get() != null && auxVolume.get() != 0){
+                        variacaoVolume.add(((x / auxVolume.get())-1)*100);
                     }
                     auxVolume.set(x);
                 });
@@ -617,9 +637,33 @@ public class TesteService {
         Double valorAtual = Double.valueOf(0.0);
         Double valorImediatamenteAnterior = Double.valueOf(0.0);
         for(int i = 0; i < variacaoVolume.size(); i++){
-            valorAtual += lagrange(variacaoValores.get(variacaoValores.size()-1), variacaoValores, i)*variacaoVolume.get(i);
-            valorImediatamenteAnterior += lagrange(variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, variacaoValores, i)*variacaoVolume.get(i);
+            Double incrementoAtual = lagrange(variacaoValores.get(variacaoValores.size()-1), variacaoValores, i)*variacaoVolume.get(i);
+            valorAtual += Double.isNaN(incrementoAtual) ? Double.valueOf(0.0) : incrementoAtual;
+            Double incrementoAnterior = lagrange(variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, variacaoValores, i)*variacaoVolume.get(i);
+            valorImediatamenteAnterior += Double.isNaN(incrementoAnterior) ? Double.valueOf(0.0) : incrementoAnterior;
         }
+        /*Double valorAtualToMax = valorAtual;
+        Double valorMax = Double.valueOf(0.0);
+        Double valorVariacaoReferencia = variacaoValores.get(variacaoValores.size()-1);
+        boolean escape = true;
+        if(0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue()) > 0){
+            while(escape){
+                variacaoValores.add(valorVariacaoReferencia);
+                variacaoVolume.add(Integer.valueOf((int) Math.round(valorAtualToMax.doubleValue())));
+                valorMax = valorAtualToMax;
+                for(int i = 0; i < variacaoVolume.size(); i++){
+                    Double incremento = lagrange(valorVariacaoReferencia, variacaoValores, i)*variacaoVolume.get(i);
+                    valorAtualToMax += Double.isNaN(incremento) ? Double.valueOf(0.0) : incremento;
+                }
+                if(valorAtualToMax < valorMax){
+                    escape = false;
+                }
+                variacaoValores = variacaoValores.subList(0, variacaoValores.size()-1);
+                variacaoVolume = variacaoVolume.subList(0, variacaoVolume.size()-1);
+                valorVariacaoReferencia += 0.001;
+            }
+        }*/
+
         return "PREDICAO POLINOMIAL LAGRANGE - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
     }
 
@@ -637,9 +681,32 @@ public class TesteService {
         Double valorAtual = Double.valueOf(variacaoVolume.get(0));
         Double valorImediatamenteAnterior = Double.valueOf(variacaoVolume.get(0));
         for(int i = 0; i < variacaoVolume.size(); i++){
-            valorAtual += newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1), i);
-            valorImediatamenteAnterior += newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, i);
+            Double incrementoAtual = newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1), i);
+            valorAtual += Double.isNaN(incrementoAtual) ? Double.valueOf(0.0):incrementoAtual;
+            Double incrementoAnterior = newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, i);
+            valorImediatamenteAnterior += Double.isNaN(incrementoAnterior) ? Double.valueOf(0.0):incrementoAnterior;
         }
+        /*Double valorAtualToMax = valorAtual;
+        Double valorMax = Double.valueOf(0.0);
+        Double valorVariacaoReferencia = variacaoValores.get(variacaoValores.size()-1);
+        boolean escape = true;
+        if(0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue()) > 0){
+            while(escape){
+                variacaoValores.add(valorVariacaoReferencia);
+                variacaoVolume.add(Integer.valueOf((int) Math.round(valorAtualToMax.doubleValue())));
+                valorMax = valorAtualToMax;
+                for(int i = 0; i < variacaoVolume.size(); i++){
+                    Double incremento = newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, valorVariacaoReferencia, i);
+                    valorAtualToMax += Double.isNaN(incremento) ? Double.valueOf(0.0):incremento;
+                }
+                if(valorAtualToMax < valorMax){
+                    escape = false;
+                }
+                variacaoValores = variacaoValores.subList(0, variacaoValores.size()-1);
+                variacaoVolume = variacaoVolume.subList(0, variacaoVolume.size()-1);
+                valorVariacaoReferencia += 0.001;
+            }
+        }*/
         return "PREDICAO POLINOMIAL NEWTON - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
     }
 
@@ -663,8 +730,8 @@ public class TesteService {
             List<Integer> novaVariacaoVolumesDireita = variacaoVolumes.subList(0, variacaoVolumes.size()-1);
             List<Double> novaVariacaoValoresEsquerda = variacaoValores.subList(1, variacaoValores.size());
             List<Integer> novaVariacaoVolumesEsquerda = variacaoVolumes.subList(1, variacaoVolumes.size());
-            return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1) - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1))/
-                    (valorFinal - valorInicial));
+            return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1).doubleValue())/
+                    (valorFinal.doubleValue() - valorInicial.doubleValue()));
         }
     }
 
