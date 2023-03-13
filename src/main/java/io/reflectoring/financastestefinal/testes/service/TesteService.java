@@ -365,7 +365,7 @@ public class TesteService {
                     for(int i =  8; i < quartaParte.length - 15; i += 15){
                         valores.add(Double.valueOf(quartaParte[i].substring(1)));
                         if(quartaParte[i-1].contains("[]]")){
-                            valoresVolume.add(Double.valueOf((quartaParte[i-7] + quartaParte[i-6]) + "." + (quartaParte[i-5])));
+                            valoresVolume.add(Double.valueOf(quartaParte[i-7] + "." + quartaParte[i-6]));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         } else if(quartaParte[i-1].contains("]]")){
