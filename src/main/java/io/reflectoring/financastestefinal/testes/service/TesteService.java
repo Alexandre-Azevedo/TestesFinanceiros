@@ -131,15 +131,15 @@ public class TesteService {
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
                 List<String> data = new ArrayList<>();
-                List<Integer> valoresVolume = new ArrayList<>();
+                List<Double> valoresVolume = new ArrayList<>();
                 for(int i =  quartaParte[25].substring(1).equals("-10800]]") ? 26:25; i < quartaParte.length; i += 15){
                     valores.add(Double.valueOf(quartaParte[i].substring(1)));
                     if(quartaParte[i+6].contains("]]")){
-                        valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
+                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                         data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }else{
-                        valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
+                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                         data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }
@@ -156,8 +156,8 @@ public class TesteService {
                     }
                     aux.set(x);
                 });
-                List<Integer> variacaoVolume = new ArrayList<>();
-                AtomicReference<Integer> auxVolume = new AtomicReference<>(null);
+                List<Double> variacaoVolume = new ArrayList<>();
+                AtomicReference<Double> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
                     if(auxVolume.get() != null && auxVolume.get() != 0){
                         variacaoVolume.add(((x/ auxVolume.get())-1)*100);
@@ -175,7 +175,7 @@ public class TesteService {
                         System.out.println(nomeAcao+" - possibilidade de venda");
                     }*/
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
+                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
                             "5D variancia: "+ String.format("%.4f", variancia) + " | " +
                             "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
                             "5D "+ moda(valores) + " | " +
@@ -197,7 +197,7 @@ public class TesteService {
             if( valores.get(valores.size()-1).doubleValue() < menorValorMediaModa){
                 if(analiseInicial){
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
+                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
                             "5D variancia: "+ String.format("%.4f", variancia) + " | " +
                             "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
                             "5D "+ moda(valores) + " | " +
@@ -246,15 +246,15 @@ public class TesteService {
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
                 List<String> data = new ArrayList<>();
-                List<Integer> valoresVolume = new ArrayList<>();
+                List<Double> valoresVolume = new ArrayList<>();
                 for(int i =  quartaParte[25].substring(1).equals("-10800]]") ? 26:25; i < quartaParte.length; i += 15){
                     valores.add(Double.valueOf(quartaParte[i].substring(1)));
                     if(quartaParte[i+6].contains("]]")){
-                        valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
+                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                         data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }else{
-                        valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
+                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
                         horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                         data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                     }
@@ -271,13 +271,13 @@ public class TesteService {
                     }
                     aux.set(x);
                 });
-                List<Integer> variacaoVolume = new ArrayList<>();
-                AtomicReference<Integer> auxVolume = new AtomicReference<>(null);
+                List<Double> variacaoVolume = new ArrayList<>();
+                AtomicReference<Double> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
                     if(auxVolume.get() != null && auxVolume.get() != 0){
                         variacaoVolume.add(((x/ auxVolume.get())-1)*100);
                     }
-                    auxVolume.set(x);
+                    auxVolume.set(Double.valueOf(x));
                 });
                 Double valorModa = modaValue(valores).doubleValue();
                 Double valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
@@ -360,20 +360,20 @@ public class TesteService {
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
                 List<String> data = new ArrayList<>();
-                List<Integer> valoresVolume = new ArrayList<>();
+                List<Double> valoresVolume = new ArrayList<>();
                 if(nomeAcao.equals("BTC-USD") || nomeAcao.equals("ETH-USD")){
                     for(int i =  8; i < quartaParte.length - 15; i += 15){
                         valores.add(Double.valueOf(quartaParte[i].substring(1)));
                         if(quartaParte[i-1].contains("[]]")){
-                            valoresVolume.add(Integer.valueOf(quartaParte[i-7] + quartaParte[i-6]));
+                            valoresVolume.add(Double.valueOf((quartaParte[i-7] + quartaParte[i-6]) + "." + (quartaParte[i-5])));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         } else if(quartaParte[i-1].contains("]]")){
-                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
+                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         }else{
-                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
+                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         }
@@ -382,15 +382,15 @@ public class TesteService {
                     for(int i =  quartaParte[8].substring(1).equals("-10800]]") ? 9:10; i < quartaParte.length; i += 15){
                         valores.add(Double.valueOf(quartaParte[i].substring(1)));
                         if(quartaParte[i+6].contains("[]]")){
-                            valoresVolume.add(Integer.valueOf("0"));
+                            valoresVolume.add(Double.valueOf("0"));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         } else if(quartaParte[i+6].contains("]]")){
-                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
+                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         }else{
-                            valoresVolume.add(Integer.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
+                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         }
@@ -408,8 +408,8 @@ public class TesteService {
                     }
                     aux.set(x);
                 });
-                List<Integer> variacaoVolume = new ArrayList<>();
-                AtomicReference<Integer> auxVolume = new AtomicReference<>(null);
+                List<Double> variacaoVolume = new ArrayList<>();
+                AtomicReference<Double> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
                     if(auxVolume.get() != null && auxVolume.get() != 0){
                         variacaoVolume.add(((x / auxVolume.get())-1)*100);
@@ -427,7 +427,7 @@ public class TesteService {
                         System.out.println(nomeAcao+" - possibilidade de venda");
                     }*/
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                        String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
+                        String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
                         "5D variancia: "+ String.format("%.4f", variancia) + " | " +
                         "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
                         "5D "+ moda(valores) + " | " +
@@ -449,7 +449,7 @@ public class TesteService {
             if( valores.get(valores.size()-1).doubleValue() < menorValorMediaModa){
                 if(analiseInicial){
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Integer::intValue).sum()/valoresVolume.size()) + " | " +
+                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
                             "5D variancia: "+  String.format("%.4f", variancia) + " | " +
                             "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
                             "5D "+  moda(valores) + " | " +
@@ -612,7 +612,7 @@ public class TesteService {
         return "CESTO BASE - NÃO ENCONTRADO";
     }
 
-    public String predicaoPolinomial(List<Double> variacaoValores, List<Integer> variacaoVolume){
+    public String predicaoPolinomial(List<Double> variacaoValores, List<Double> variacaoVolume){
         int quantZeros = variacaoVolume.stream().filter(x -> x.equals(0)).collect(Collectors.toList()).size();
         quantZeros = (variacaoVolume.get(variacaoVolume.size()-1)).equals(0) ? (quantZeros-1) : quantZeros;
         List<Double> zerosFunc = new ArrayList<>();
@@ -633,7 +633,7 @@ public class TesteService {
             return "PREDICAO POLINOMIAL - NÃO ENCONTRADO ("+String.valueOf(quantZeros)+")";
         }
     }
-    public String predicaoPolinomialLagrange(List<Double> variacaoValores, List<Integer> variacaoVolume){
+    public String predicaoPolinomialLagrange(List<Double> variacaoValores, List<Double> variacaoVolume){
         Double valorAtual = Double.valueOf(0.0);
         Double valorImediatamenteAnterior = Double.valueOf(0.0);
         for(int i = 0; i < variacaoVolume.size(); i++){
@@ -677,7 +677,7 @@ public class TesteService {
         return retorno;
     }
 
-    public String predicaoPolinomialNewton(List<Double> variacaoValores, List<Integer> variacaoVolume){
+    public String predicaoPolinomialNewton(List<Double> variacaoValores, List<Double> variacaoVolume){
         Double valorAtual = Double.valueOf(variacaoVolume.get(0));
         Double valorImediatamenteAnterior = Double.valueOf(variacaoVolume.get(0));
         for(int i = 0; i < variacaoVolume.size(); i++){
@@ -720,16 +720,16 @@ public class TesteService {
         }
         return retorno;
     }
-    public Double newton(List<Double> variacaoValores, List<Integer> variacaoVolumes, int index){
+    public Double newton(List<Double> variacaoValores, List<Double> variacaoVolumes, int index){
         if(index == 0){
             return Double.valueOf(variacaoVolumes.get(0));
         }else{
             Double valorFinal = variacaoValores.get(variacaoValores.size() - 1);
             Double valorInicial = variacaoValores.get(0);
             List<Double> novaVariacaoValoresDireita = variacaoValores.subList(0, variacaoValores.size()-1);
-            List<Integer> novaVariacaoVolumesDireita = variacaoVolumes.subList(0, variacaoVolumes.size()-1);
+            List<Double> novaVariacaoVolumesDireita = variacaoVolumes.subList(0, variacaoVolumes.size()-1);
             List<Double> novaVariacaoValoresEsquerda = variacaoValores.subList(1, variacaoValores.size());
-            List<Integer> novaVariacaoVolumesEsquerda = variacaoVolumes.subList(1, variacaoVolumes.size());
+            List<Double> novaVariacaoVolumesEsquerda = variacaoVolumes.subList(1, variacaoVolumes.size());
             return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1).doubleValue())/
                     (valorFinal.doubleValue() - valorInicial.doubleValue()));
         }
