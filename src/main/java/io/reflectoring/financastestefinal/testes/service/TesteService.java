@@ -365,7 +365,7 @@ public class TesteService {
                     for(int i =  8; i < quartaParte.length - 15; i += 15){
                         valores.add(Double.valueOf(quartaParte[i].substring(1)));
                         if(quartaParte[i-1].contains("[]]")){
-                            valoresVolume.add(Double.valueOf(quartaParte[i-7] + "." + quartaParte[i-6]));
+                            valoresVolume.add(Double.valueOf(quartaParte[i-7] + "." + (quartaParte[i-6].length() == 1 ? "0"+quartaParte[i-6] : quartaParte[i-6])));
                             horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         } else if(quartaParte[i-1].contains("]]")){
@@ -378,6 +378,21 @@ public class TesteService {
                             data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
                         }
                     }
+                    var valoresAux = new ArrayList<Double>();
+                    for(int i =  0; i < valores.size(); i += 3){
+                        if(i+1 < valores.size() && i+2 < valores.size()){
+                            valoresAux.add((valores.get(i) + valores.get(i+1) + valores.get(i+2)));
+                        }
+                    }
+
+                    var valoresVolumeAux = new ArrayList<Double>();
+                    for(int i =  0; i < valoresVolume.size(); i += 3){
+                        if(i+1 < valoresVolume.size() && i+2 < valoresVolume.size()) {
+                            valoresVolumeAux.add((valoresVolume.get(i) + valoresVolume.get(i + 1) + valoresVolume.get(i + 2)));
+                        }
+                    }
+                    valores = valoresAux;
+                    valoresVolume = valoresVolumeAux;
                 }else{
                     for(int i =  quartaParte[8].substring(1).equals("-10800]]") ? 9:10; i < quartaParte.length; i += 15){
                         valores.add(Double.valueOf(quartaParte[i].substring(1)));
