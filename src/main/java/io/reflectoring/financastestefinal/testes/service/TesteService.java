@@ -165,9 +165,12 @@ public class TesteService {
                     auxVolume.set(x);
                 });
                 Double valorModa = modaValue(valores).doubleValue();
-                Double valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
-                Double variancia = variancia(valores, valorMedia);
-                Double isNormal = isNormal(valores, variancia, valorMedia);
+                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum()/variacao.size()).doubleValue();
+                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolume.size()).doubleValue();
+                Double varianciaValores = variancia(variacao, valorMedia);
+                Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                Double covariancia = covariancia(variacao, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                /*Double isNormal = isNormal(valores, variancia, valorMedia);*/
 
                 if(!analiseInicial) {
                     /*if((valorModa < valores.get(valores.size() - 1) && valores.get(valores.size() - 1) < valorMedia) ||
@@ -176,8 +179,7 @@ public class TesteService {
                     }*/
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
                             String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                            "5D variancia: "+ String.format("%.4f", variancia) + " | " +
-                            "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
+                            "5D covariancia: "+ String.format("%.4f", covariancia) + " | " +
                             "5D "+ moda(valores) + " | " +
                             "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
                             "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
@@ -198,8 +200,7 @@ public class TesteService {
                 if(analiseInicial){
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
                             String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                            "5D variancia: "+ String.format("%.4f", variancia) + " | " +
-                            "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
+                            "5D covariancia: "+ String.format("%.4f", covariancia) + " | " +
                             "5D "+ moda(valores) + " | " +
                             "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
                             "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
@@ -280,9 +281,12 @@ public class TesteService {
                     auxVolume.set(Double.valueOf(x));
                 });
                 Double valorModa = modaValue(valores).doubleValue();
-                Double valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
-                Double variancia = variancia(valores, valorMedia);
-                Double isNormal = isNormal(valores, variancia, valorMedia);
+                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum()/variacao.size()).doubleValue();
+                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolume.size()).doubleValue();
+                Double varianciaValores = variancia(variacao, valorMedia);
+                Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                Double covariancia = covariancia(variacao, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                /*Double isNormal = isNormal(valores, variancia, valorMedia);*/
 
                 if(!analiseInicial) {
                     /*if((valorModa < valores.get(valores.size() - 1) && valores.get(valores.size() - 1) < valorMedia) ||
@@ -432,9 +436,12 @@ public class TesteService {
                     auxVolume.set(x);
                 });
                 Double valorModa = modaValue(valores).doubleValue();
-                Double valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
-                Double variancia = variancia(valores, valorMedia);
-                Double isNormal = isNormal(valores, variancia, valorMedia);
+                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum()/variacao.size()).doubleValue();
+                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolume.size()).doubleValue();
+                Double varianciaValores = variancia(variacao, valorMedia);
+                Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                Double covariancia = covariancia(variacao, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                /*Double isNormal = isNormal(valores, variancia, valorMedia);*/
 
                 if(!analiseInicial) {
                     /*if((valorModa < valores.get(valores.size() - 1) && valores.get(valores.size() - 1) < valorMedia) ||
@@ -443,8 +450,7 @@ public class TesteService {
                     }*/
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
                         String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                        "5D variancia: "+ String.format("%.4f", variancia) + " | " +
-                        "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
+                        "5D covariancia: "+ String.format("%.4f", covariancia) + " | " +
                         "5D "+ moda(valores) + " | " +
                         "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
                         "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
@@ -465,8 +471,7 @@ public class TesteService {
                 if(analiseInicial){
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
                             String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                            "5D variancia: "+  String.format("%.4f", variancia) + " | " +
-                            "5D isNormal: "+ String.format("%.2f", isNormal(valores, variancia, valorMedia)) + "% | " +
+                            "5D covariancia: "+  String.format("%.4f", covariancia) + " | " +
                             "5D "+  moda(valores) + " | " +
                             "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
                             "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
@@ -513,11 +518,20 @@ public class TesteService {
     }
 
     public Double variancia(List<Double> valores, Double media){
-        AtomicReference<Double> valorMenosMediaAcumuladoSqt = new AtomicReference<>(0d);
-        valores.stream().forEach(x -> {
-            valorMenosMediaAcumuladoSqt.set(Math.pow(x - media, 2));
-        });
-        return Math.sqrt(valorMenosMediaAcumuladoSqt.get()/valores.size());
+        Double numerador = 0d;
+        for(int i = 0; i < valores.size(); i++){
+            numerador = numerador + Math.pow(valores.get(i) - media, 2);
+        }
+        return Math.sqrt(numerador/(valores.size()-1));
+    }
+    public Double covariancia(List<Double> valores, List<Double> volume, Double mediaValores, Double mediaVolume, Double varianciaValores, Double varianciaVolume){
+        Double numerador = 0d;
+        for(int i = 0; i < valores.size(); i++){
+            numerador = numerador + (valores.get(i) - mediaValores)*(volume.get(i) - mediaVolume);
+        }
+        Double denominador = Double.valueOf(valores.size()-1);
+
+        return (numerador/denominador)/(varianciaValores*varianciaVolume);
     }
     
     public Double isNormal(List<Double> valores, Double variancia, Double media){
