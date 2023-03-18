@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class TesteService {
+	private int contadorRecursao = 0;
+	
     public List<String> PegarConteudoPelaClasse(String html, String nomeClasse){
         List<String> retorno = new ArrayList<>();
 
@@ -190,7 +192,9 @@ public class TesteService {
                             cestoBasePattern(valores, data)+ "\n"+
                             predicaoPolinomial(variacao, variacaoVolume)+" | "+
                             predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
-                            predicaoPolinomialNewton(variacao, variacaoVolume));
+                            (variacao.size() > 30 ? 
+                            predicaoPolinomialNewton(variacao.subList(variacao.size()-30, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-30, variacaoVolume.size())) :
+                        	predicaoPolinomialNewton(variacao.subList(variacao.size()-30, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-30, variacaoVolume.size())))	);
             }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -356,6 +360,7 @@ public class TesteService {
             try {
                 response = client.send(requestMaisAtivos, HttpResponse.BodyHandlers.ofString());
                 String resposta = response.body();
+                System.out.println(resposta);
                 String[] primeiraParte = resposta.split("key: 'ds:11'");
                 String[] segundaParte = primeiraParte[1].split("sideChannel");
                 String terceiraParte = segundaParte[0].substring(60, segundaParte[0].length()-2);
@@ -700,7 +705,9 @@ public class TesteService {
         Double retorno = Double.valueOf(1.0);
         for(int i = 0; i < variacaoValores.size(); i++){
             if(i != index){
-                retorno = retorno*((valorXAtual - variacaoValores.get(i))/(variacaoValores.get(index) - variacaoValores.get(i)));
+            	if(variacaoValores.get(index) - variacaoValores.get(i) != 0) {
+                    retorno = retorno*((valorXAtual - variacaoValores.get(i))/(variacaoValores.get(index) - variacaoValores.get(i)));
+            	}
             }
         }
         return retorno;
@@ -751,6 +758,8 @@ public class TesteService {
     }
     public Double newton(List<Double> variacaoValores, List<Double> variacaoVolumes, int index){
         if(index == 0){
+        	/*contadorRecursao++;
+        	System.out.println(contadorRecursao);*/
             return Double.valueOf(variacaoVolumes.get(0));
         }else{
             Double valorFinal = variacaoValores.get(variacaoValores.size() - 1);
@@ -759,8 +768,13 @@ public class TesteService {
             List<Double> novaVariacaoVolumesDireita = variacaoVolumes.subList(0, variacaoVolumes.size()-1);
             List<Double> novaVariacaoValoresEsquerda = variacaoValores.subList(1, variacaoValores.size());
             List<Double> novaVariacaoVolumesEsquerda = variacaoVolumes.subList(1, variacaoVolumes.size());
-            return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1).doubleValue())/
-                    (valorFinal.doubleValue() - valorInicial.doubleValue()));
+            if((valorFinal.doubleValue() - valorInicial.doubleValue()) != 0) {
+            	 return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1).doubleValue())/
+                         (valorFinal.doubleValue() - valorInicial.doubleValue()));
+            }else {
+            	return 1.0;
+            }
+           
         }
     }
 

@@ -86,15 +86,10 @@ public class TesteController {
     @GetMapping("/monitoramentoDia/{acoes}")
     public void googleMonitoramentoDia(@PathVariable(value = "acoes") String acoes){
         List<String> acoesList = Arrays.stream(acoes.split(",")).toList();
-        long dataInicial = new Date().getTime();
-        while((new Date()).getTime() - dataInicial < 86400000){
-            if(((new Date()).getTime() - dataInicial) % (300000/5) == 0){
-                LinkedHashMap<String, String> resultado = testeService.analiseTemporalDia(acoesList, false);
-                System.out.println("==========================================================MON. DIA=================================================================");
-                for (Map.Entry<String,String> entry : resultado.entrySet()) {
-                    System.out.println("=> "+entry.getKey() + "=" +  entry.getValue());
-                }
-            }
+        LinkedHashMap<String, String> resultado = testeService.analiseTemporalDia(acoesList, false);
+        System.out.println("==========================================================MON. DIA=================================================================");
+        for (Map.Entry<String,String> entry : resultado.entrySet()) {
+            System.out.println("=> "+entry.getKey() + "=" +  entry.getValue());
         }
 
     }
