@@ -194,7 +194,7 @@ public class TesteService {
                             predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
                             (variacao.size() > 30 ? 
                             predicaoPolinomialNewton(variacao.subList(variacao.size()-30, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-30, variacaoVolume.size())) :
-                        	predicaoPolinomialNewton(variacao.subList(variacao.size()-30, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-30, variacaoVolume.size())))	);
+                        	predicaoPolinomialNewton(variacao, variacaoVolume))	);
             }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
