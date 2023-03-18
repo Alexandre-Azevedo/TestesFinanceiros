@@ -360,7 +360,6 @@ public class TesteService {
             try {
                 response = client.send(requestMaisAtivos, HttpResponse.BodyHandlers.ofString());
                 String resposta = response.body();
-                System.out.println(resposta);
                 String[] primeiraParte = resposta.split("key: 'ds:11'");
                 String[] segundaParte = primeiraParte[1].split("sideChannel");
                 String terceiraParte = segundaParte[0].substring(60, segundaParte[0].length()-2);
