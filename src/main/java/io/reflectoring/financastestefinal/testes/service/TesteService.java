@@ -190,10 +190,12 @@ public class TesteService {
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+ "\n"+
-                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
-                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
-                            (variacao.size() > 30 ? 
-                            predicaoPolinomialNewton(variacao.subList(variacao.size()-30, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-30, variacaoVolume.size())) :
+                            
+							(variacao.size() > 27 ? 
+							predicaoPolinomialLagrange(variacao.subList(variacao.size()-27, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-27, variacaoVolume.size())) :	
+                            predicaoPolinomialLagrange(variacao, variacaoVolume))+ " | "+
+                            (variacao.size() > 27 ? 
+                            predicaoPolinomialNewton(variacao.subList(variacao.size()-27, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-27, variacaoVolume.size())) :
                         	predicaoPolinomialNewton(variacao, variacaoVolume))	);
             }
 
@@ -213,7 +215,7 @@ public class TesteService {
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+ "\n"+
-                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            
                             predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
                             predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
@@ -304,7 +306,7 @@ public class TesteService {
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+"\n"+
-                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            
                             predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
                             predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
@@ -321,7 +323,7 @@ public class TesteService {
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+"\n"+
-                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            
                             predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
                             predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
@@ -463,7 +465,7 @@ public class TesteService {
                         cunhaDeBaixaPattern(valores)+" | "+
                         trinaguloDeReversaoPattern(valores)+" | "+
                         cestoBasePattern(valores, data) + "\n"+
-                        predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                        
                         predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
                         predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
@@ -484,7 +486,7 @@ public class TesteService {
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+ "\n"+
-                            predicaoPolinomial(variacao, variacaoVolume)+" | "+
+                            
                             predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
                             predicaoPolinomialNewton(variacao, variacaoVolume));
                 }

@@ -41,8 +41,9 @@ public class TesteController {
     @Autowired
     private TesteService testeService;
 
-    @GetMapping("/analise/{endpointAvaliado}")
-    public void google(@PathVariable(value = "endpointAvaliado") String endpointAvaliado){
+    @GetMapping("/analise/{endpointAvaliado}/{mesDia}")
+    public void google(@PathVariable(value = "endpointAvaliado") String endpointAvaliado,
+    		@PathVariable(value = "mesDia") Boolean mesDia){
             var client = HttpClient.newHttpClient();
             var requestMaisAtivos = HttpRequest.newBuilder(
                             URI.create("https://www.google.com/finance/markets/"+endpointAvaliado))
@@ -62,7 +63,7 @@ public class TesteController {
                 List<String> maisAtivos = testeService.PegarConteudoPelaClasse(respostaMaisAtivos, "iLEcy");
                 /*List<String> maisGanhos =testeService.PegarConteudoPelaClasse(respostaMaiorGanho, "iLEcy");
                 List<String> resultadoAnaliseInicial = testeService.comparar(maisAtivos, maisGanhos);*/
-                LinkedHashMap<String, String> resultado = testeService.analiseTemporalMes(maisAtivos, true);
+                LinkedHashMap<String, String> resultado = (mesDia ? testeService.analiseTemporalMes(maisAtivos, true) : testeService.analiseTemporalDia(maisAtivos, false));
                 System.out.println("==========================================================ANALISE=================================================================");
                 for (Map.Entry<String,String> entry : resultado.entrySet()) {
                     System.out.println("=> "+entry.getKey() + "=" +  entry.getValue());
