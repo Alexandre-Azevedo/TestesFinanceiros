@@ -806,6 +806,7 @@ public class TesteService {
                 casasConfiaveis.contains(element.childNode(3).childNode(1).childNode(3).attr("alt")) &&
                 casasConfiaveis.contains(element.childNode(3).childNode(3).childNode(3).attr("alt"))).collect(Collectors.toList());
 
+
         filtrado.forEach(element -> {
             System.out.println(((TextNode) element.childNode(1).childNode(3).childNode(1).childNode(0)).text()
                                 + " / " + ((TextNode) element.childNode(3).childNode(1).childNode(5).childNode(0)).text() + " - " + ((TextNode) element.childNode(3).childNode(3).childNode(5).childNode(0)).text()
