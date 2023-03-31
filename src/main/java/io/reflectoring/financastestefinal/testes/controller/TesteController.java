@@ -1,38 +1,23 @@
 package io.reflectoring.financastestefinal.testes.controller;
 
-import ch.qos.logback.core.joran.spi.XMLUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.reflectoring.financastestefinal.testes.service.TesteService;
-import org.apache.catalina.util.DOMWriter;
-import org.apache.tomcat.util.descriptor.XmlIdentifiers;
-import org.apache.tomcat.util.descriptor.web.XmlEncodingBase;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.xml.DomUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.beans.XMLDecoder;
-import java.beans.XMLEncoder;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
-import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.Flow;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.*;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/google")
@@ -41,9 +26,26 @@ public class TesteController {
     @Autowired
     private TesteService testeService;
 
+    @GetMapping("/testeOdds")
+    public void odds(){
+        var client = HttpClient.newHttpClient();
+        var requestMaisAtivos = HttpRequest.newBuilder(
+                        URI.create("https://www.sportytrader.com/pt-br/odds/basquete/"))
+                .header("accept", "application/html")
+                .build();
+        HttpResponse<String> responseMaisAtivos = null;
+        try {
+            responseMaisAtivos = client.send(requestMaisAtivos, BodyHandlers.ofString());
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        testeService.processaOdds(responseMaisAtivos.body());
+
+        String respostaMaisAtivos = responseMaisAtivos.body();
+    }
     @GetMapping("/analise/{endpointAvaliado}/{mesDia}")
     public void google(@PathVariable(value = "endpointAvaliado") String endpointAvaliado,
-    		@PathVariable(value = "mesDia") Boolean mesDia){
+                       @PathVariable(value = "mesDia") Boolean mesDia){
             var client = HttpClient.newHttpClient();
             var requestMaisAtivos = HttpRequest.newBuilder(
                             URI.create("https://www.google.com/finance/markets/"+endpointAvaliado))

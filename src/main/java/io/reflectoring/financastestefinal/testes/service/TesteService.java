@@ -1,5 +1,10 @@
 package io.reflectoring.financastestefinal.testes.service;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,8 +21,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class TesteService {
-	private int contadorRecursao = 0;
-	
+    private int contadorRecursao = 0;
+
     public List<String> PegarConteudoPelaClasse(String html, String nomeClasse){
         List<String> retorno = new ArrayList<>();
 
@@ -190,13 +195,13 @@ public class TesteService {
                             cunhaDeBaixaPattern(valores)+" | "+
                             trinaguloDeReversaoPattern(valores)+" | "+
                             cestoBasePattern(valores, data)+ "\n"+
-                            
-							(variacao.size() > 27 ? 
-							predicaoPolinomialLagrange(variacao.subList(variacao.size()-27, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-27, variacaoVolume.size())) :	
+
+                            (variacao.size() > 27 ?
+                                    predicaoPolinomialLagrange(variacao.subList(variacao.size()-27, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-27, variacaoVolume.size())) :
                             predicaoPolinomialLagrange(variacao, variacaoVolume))+ " | "+
-                            (variacao.size() > 27 ? 
+                            (variacao.size() > 27 ?
                             predicaoPolinomialNewton(variacao.subList(variacao.size()-27, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-27, variacaoVolume.size())) :
-                        	predicaoPolinomialNewton(variacao, variacaoVolume))	);
+                                    predicaoPolinomialNewton(variacao, variacaoVolume)));
             }
 
             Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
@@ -624,8 +629,8 @@ public class TesteService {
                         if((valores.get(j).doubleValue() < minValue.doubleValue()) || minValue.doubleValue() == 0d){
                             minValue = valores.get(j);
                         }
-                        if(	j+aux < i &&
-                    		valores.get(j).doubleValue() < valores.get(j+aux).doubleValue() &&
+                        if(j+aux < i &&
+                                valores.get(j).doubleValue() < valores.get(j+aux).doubleValue() &&
                             (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
                             (valores.get(j+aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j+aux).doubleValue() <= valorAtual.doubleValue())){
                             quantidadeSubida++;
@@ -706,9 +711,9 @@ public class TesteService {
         Double retorno = Double.valueOf(1.0);
         for(int i = 0; i < variacaoValores.size(); i++){
             if(i != index){
-            	if(variacaoValores.get(index) - variacaoValores.get(i) != 0) {
+                if(variacaoValores.get(index) - variacaoValores.get(i) != 0) {
                     retorno = retorno*((valorXAtual - variacaoValores.get(i))/(variacaoValores.get(index) - variacaoValores.get(i)));
-            	}
+                }
             }
         }
         return retorno;
@@ -759,7 +764,7 @@ public class TesteService {
     }
     public Double newton(List<Double> variacaoValores, List<Double> variacaoVolumes, int index){
         if(index == 0){
-        	/*contadorRecursao++;
+            /*contadorRecursao++;
         	System.out.println(contadorRecursao);*/
             return Double.valueOf(variacaoVolumes.get(0));
         }else{
@@ -770,10 +775,10 @@ public class TesteService {
             List<Double> novaVariacaoValoresEsquerda = variacaoValores.subList(1, variacaoValores.size());
             List<Double> novaVariacaoVolumesEsquerda = variacaoVolumes.subList(1, variacaoVolumes.size());
             if((valorFinal.doubleValue() - valorInicial.doubleValue()) != 0) {
-            	 return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1).doubleValue())/
+                return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1).doubleValue())/
                          (valorFinal.doubleValue() - valorInicial.doubleValue()));
             }else {
-            	return 1.0;
+                return 1.0;
             }
            
         }
@@ -788,5 +793,24 @@ public class TesteService {
             }
         });
         return retorno;
+    }
+
+    public void processaOdds(String html){
+        List<String> casasConfiaveis = Arrays.stream(new String[]{"Bet365", "Betnacional", "Bodog", "SportingBet", "PixBet", "Esportedasorte", "Betano", "1xBet", "Betfair", "PingolBet"}).collect(Collectors.toList());
+        Document document = Jsoup.parse(html);
+        Elements linksGoogle = document.select("div[class*=cursor-pointer border rounded-md mb-4 px-1 py-2 flex flex-col lg:flex-row relative]");
+        /*((TextNode) element.childNode(1).childNode(1).childNode(0)).text().contains("31 mar") &&*/
+        List<Element> filtrado = linksGoogle.stream().filter(element ->
+                Double.valueOf(((TextNode) element.childNode(3).childNode(1).childNode(5).childNode(0)).text()) > 2 &&
+                Double.valueOf(((TextNode) element.childNode(3).childNode(3).childNode(5).childNode(0)).text()) > 2 &&
+                casasConfiaveis.contains(element.childNode(3).childNode(1).childNode(3).attr("alt")) &&
+                casasConfiaveis.contains(element.childNode(3).childNode(3).childNode(3).attr("alt"))).collect(Collectors.toList());
+
+        filtrado.forEach(element -> {
+            System.out.println(((TextNode) element.childNode(1).childNode(3).childNode(1).childNode(0)).text()
+                                + " / " + ((TextNode) element.childNode(3).childNode(1).childNode(5).childNode(0)).text() + " - " + ((TextNode) element.childNode(3).childNode(3).childNode(5).childNode(0)).text()
+                                + " / " + element.childNode(3).childNode(1).childNode(3).attr("alt") + " - " + element.childNode(3).childNode(3).childNode(3).attr("alt"));
+        });
+
     }
 }
