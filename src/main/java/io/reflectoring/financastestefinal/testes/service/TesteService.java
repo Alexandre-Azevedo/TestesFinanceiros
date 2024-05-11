@@ -5,8 +5,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,31 +20,36 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 public class TesteService {
     private int contadorRecursao = 0;
 
-    public List<String> PegarConteudoPelaClasse(String html, String nomeClasse){
+    public List<String> PegarConteudoPelaClasse(String html, String nomeClasse) {
         List<String> retorno = new ArrayList<>();
 
         String[] primeiraParte = html.split(nomeClasse);
-        List<String> primeiraParteList = Arrays.stream(primeiraParte).toList();
+        List<String> primeiraParteList = Arrays.asList(primeiraParte);
         List<String> primeiraParteListFormat = new ArrayList<>();
 
-        for(int i = 0; i < primeiraParteList.size(); i++){
+        for (int i = 0; i < primeiraParteList.size(); i++) {
             boolean validoOrInvalido = false;
-            for(int j = 0; j < primeiraParteList.get(i).length(); j++){
-                if(primeiraParteList.get(i).charAt(j) == '>'){
+            for (int j = 0; j < primeiraParteList.get(i).length(); j++) {
+                if (primeiraParteList.get(i).charAt(j) == '>') {
                     validoOrInvalido = true;
                     break;
                 }
             }
-            if(validoOrInvalido){
+            if (validoOrInvalido) {
                 primeiraParteListFormat.add(primeiraParteList.get(i));
             }
         }
@@ -48,15 +59,15 @@ public class TesteService {
             int quantidadeFechando = 0;
             String valorApendado = "";
             for (int i = 0; i < x.length(); i++) {
-                if(x.charAt(i) == '>'){
+                if (x.charAt(i) == '>') {
                     quantidadeAbrindo++;
 
                 }
-                if(x.charAt(i) == '<'){
+                if (x.charAt(i) == '<') {
                     quantidadeFechando++;
 
                 }
-                if(quantidadeAbrindo != quantidadeFechando){
+                if (quantidadeAbrindo != quantidadeFechando) {
                     valorApendado += x.charAt(i);
                 }
 
@@ -65,11 +76,12 @@ public class TesteService {
         });
         return retorno;
     }
-    public List<String> PegarPercentual(String html, String nomeClasse){
+
+    public List<String> PegarPercentual(String html, String nomeClasse) {
         List<String> retorno = new ArrayList<>();
 
         String[] primeiraParte = html.split("Diminuiu");
-        List<String> primeiraParteList = Arrays.stream(primeiraParte).toList();
+        List<String> primeiraParteList = Arrays.asList(primeiraParte);
         List<String> primeiraParteListFormat = new ArrayList<>();
 
         /*for(int i = 0; i < primeiraParteList.size(); i++){
@@ -107,18 +119,19 @@ public class TesteService {
         });*/
         return retorno;
     }
-    public LinkedHashMap<String, String> analiseTemporalDia(List<String> nomesAcoes, boolean analiseInicial){
+
+    public LinkedHashMap<String, String> analiseTemporalDia(List<String> nomesAcoes, boolean analiseInicial) {
         LinkedHashMap<String, String> variacaoMedia = new LinkedHashMap<>();
         nomesAcoes.forEach(nm -> {
             String nomeAcao = "";
-            if(!nm.contains(">")){
+            if (!nm.contains(">")) {
                 nomeAcao = nm;
-            }else{
+            } else {
                 nomeAcao = nm.split(">")[4];
             }
             var client = HttpClient.newHttpClient();
             var requestMaisAtivos = HttpRequest.newBuilder(
-                            URI.create("https://www.google.com/finance/quote/"+nomeAcao+":BVMF?window=5D"))
+                    URI.create("https://www.google.com/finance/quote/" + nomeAcao + ":BVMF?window=5D"))
                     .header("accept", "application/json")
                     .build();
             HttpResponse<String> response = null;
@@ -127,104 +140,102 @@ public class TesteService {
                 String resposta = response.body();
                 String[] primeiraParte = resposta.split("key: 'ds:10'");
                 String[] segundaParte = primeiraParte[1].split("sideChannel");
-                String terceiraParte = segundaParte[0].substring(60, segundaParte[0].length()-2);
+                String terceiraParte = segundaParte[0].substring(60, segundaParte[0].length() - 2);
                 String[] quartaParte = terceiraParte.split(",");
 
                 String[] primeiraParteMes = resposta.split("key: 'ds:11'");
                 String[] segundaParteMes = primeiraParte[1].split("sideChannel");
-                String terceiraParteMes = segundaParte[0].substring(60, segundaParte[0].length()-2);
+                String terceiraParteMes = segundaParte[0].substring(60, segundaParte[0].length() - 2);
                 String[] quartaParteMes = terceiraParte.split(",");
 
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
                 List<String> data = new ArrayList<>();
                 List<Double> valoresVolume = new ArrayList<>();
-                for(int i =  quartaParte[25].substring(1).equals("-10800]]") ? 26:25; i < quartaParte.length; i += 15){
+                for (int i = quartaParte[25].substring(1).equals("-10800]]") ? 26 : 25; i < quartaParte.length; i += 15) {
                     valores.add(Double.valueOf(quartaParte[i].substring(1)));
-                    if(quartaParte[i+6].contains("]]")){
-                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
-                        horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                    }else{
-                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
-                        horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                    if (quartaParte[i + 6].contains("]]")) {
+                        valoresVolume.add(Double.valueOf(quartaParte[i + 6].substring(0, quartaParte[i + 6].length() - 2)));
+                        horas.add(quartaParte[i - 5] + ":" + quartaParte[i - 4]);
+                        data.add(quartaParte[i - 6] + "/" + quartaParte[i - 7]);
+                    } else {
+                        valoresVolume.add(Double.valueOf(quartaParte[i + 6].substring(0, quartaParte[i + 6].length() - 1)));
+                        horas.add(quartaParte[i - 5] + ":" + quartaParte[i - 4]);
+                        data.add(quartaParte[i - 6] + "/" + quartaParte[i - 7]);
                     }
                 }
 
-               
 
-                
                 List<Double> variacao = new ArrayList<>();
                 AtomicReference<Double> aux = new AtomicReference<>(null);
                 valores.stream().forEach(x -> {
-                    if(aux.get() != null){
-                        variacao.add(((x/ aux.get())-1)*100);
+                    if (aux.get() != null) {
+                        variacao.add(((x / aux.get()) - 1) * 100);
                     }
                     aux.set(x);
                 });
                 List<Double> variacaoVolume = new ArrayList<>();
                 AtomicReference<Double> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
-                    if(auxVolume.get() != null && auxVolume.get() != 0){
-                        variacaoVolume.add(((x/ auxVolume.get())-1)*100);
+                    if (auxVolume.get() != null && auxVolume.get() != 0) {
+                        variacaoVolume.add(((x / auxVolume.get()) - 1) * 100);
                     }
                     auxVolume.set(x);
                 });
                 Double valorModa = modaValue(valores).doubleValue();
-                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum()/variacao.size()).doubleValue();
-                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolume.size()).doubleValue();
+                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()).doubleValue();
+                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolume.size()).doubleValue();
                 Double varianciaValores = variancia(variacao, valorMedia);
                 Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
                 Double covariancia = covariancia(variacao, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
                 /*Double isNormal = isNormal(valores, variancia, valorMedia);*/
 
-                if(!analiseInicial) {
+                if (!analiseInicial) {
                     /*if((valorModa < valores.get(valores.size() - 1) && valores.get(valores.size() - 1) < valorMedia) ||
                         (valorModa > valores.get(valores.size() - 1) && valores.get(valores.size() - 1) > valorMedia)){
                         System.out.println(nomeAcao+" - possibilidade de venda");
                     }*/
                     variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                            "5D covariancia: "+ String.format("%.4f", covariancia) + " | " +
-                            "5D "+ moda(valores) + " | " +
-                            "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
-                            "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
-                            horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
-                            headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores)+" | "+
-                            trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data)+ "\n"+
+                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / valoresVolume.size()) + " | " +
+                            "5D covariancia: " + String.format("%.4f", covariancia) + " | " +
+                            "5D " + moda(valores) + " | " +
+                            "5D Media: " + String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
+                            "5D Atual: " + valores.get(valores.size() - 1).toString() + "\n" +
+                            horas.get(horas.size() - 1) + " | " + headShoulderPattern(valores) + " | " +
+                            headShoulderReversePattern(valores) + " | " +
+                            cunhaDeBaixaPattern(valores) + " | " +
+                            trinaguloDeReversaoPattern(valores) + " | " +
+                            cestoBasePattern(valores, variacaoVolume) + "\n" +
 
                             (variacao.size() > 27 ?
-                                    predicaoPolinomialLagrange(variacao.subList(variacao.size()-27, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-27, variacaoVolume.size())) :
-                            predicaoPolinomialLagrange(variacao, variacaoVolume))+ " | "+
+                                    predicaoPolinomialLagrange(variacao.subList(variacao.size() - 27, variacao.size()), variacaoVolume.subList(variacaoVolume.size() - 27, variacaoVolume.size())) :
+                                    predicaoPolinomialLagrange(variacao, variacaoVolume)) + " | " +
                             (variacao.size() > 27 ?
-                            predicaoPolinomialNewton(variacao.subList(variacao.size()-27, variacao.size()), variacaoVolume.subList(variacaoVolume.size()-27, variacaoVolume.size())) :
+                                    predicaoPolinomialNewton(variacao.subList(variacao.size() - 27, variacao.size()), variacaoVolume.subList(variacaoVolume.size() - 27, variacaoVolume.size())) :
                                     predicaoPolinomialNewton(variacao, variacaoVolume)));
-            }
-
-            Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
-                                            modaValue(valores).doubleValue() : Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
-
-            if( valores.get(valores.size()-1).doubleValue() < menorValorMediaModa){
-                if(analiseInicial){
-                    variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                            "5D covariancia: "+ String.format("%.4f", covariancia) + " | " +
-                            "5D "+ moda(valores) + " | " +
-                            "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
-                            "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
-                            horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
-                            headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores)+" | "+
-                            trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data)+ "\n"+
-                            
-                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
-                            predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
-            }
+
+                Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue() ?
+                        modaValue(valores).doubleValue() : Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue();
+
+                if (valores.get(valores.size() - 1).doubleValue() < menorValorMediaModa) {
+                    if (analiseInicial) {
+                        variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
+                                String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / valoresVolume.size()) + " | " +
+                                "5D covariancia: " + String.format("%.4f", covariancia) + " | " +
+                                "5D " + moda(valores) + " | " +
+                                "5D Media: " + String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
+                                "5D Atual: " + valores.get(valores.size() - 1).toString() + "\n" +
+                                horas.get(horas.size() - 1) + " | " + headShoulderPattern(valores) + " | " +
+                                headShoulderReversePattern(valores) + " | " +
+                                cunhaDeBaixaPattern(valores) + " | " +
+                                trinaguloDeReversaoPattern(valores) + " | " +
+                                cestoBasePattern(valores, variacaoVolume) + "\n" +
+
+                                predicaoPolinomialLagrange(variacao, variacaoVolume) + " | " +
+                                predicaoPolinomialNewton(variacao, variacaoVolume));
+                    }
+                }
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -232,18 +243,19 @@ public class TesteService {
 
         return variacaoMedia;
     }
-    public LinkedHashMap<String, String> analiseTemporal(List<String> nomesAcoes, boolean analiseInicial){
+
+    public LinkedHashMap<String, String> analiseTemporal(List<String> nomesAcoes, boolean analiseInicial) {
         LinkedHashMap<String, String> variacaoMedia = new LinkedHashMap<>();
         nomesAcoes.forEach(nm -> {
             String nomeAcao = "";
-            if(!nm.contains(">")){
+            if (!nm.contains(">")) {
                 nomeAcao = nm;
-            }else{
+            } else {
                 nomeAcao = nm.split(">")[4];
             }
             var client = HttpClient.newHttpClient();
             var requestMaisAtivos = HttpRequest.newBuilder(
-                            URI.create("https://www.google.com/finance/quote/"+nomeAcao+":BVMF?window=5D"))
+                    URI.create("https://www.google.com/finance/quote/" + nomeAcao + ":BVMF?window=5D"))
                     .header("accept", "application/json")
                     .build();
             HttpResponse<String> response = null;
@@ -252,87 +264,85 @@ public class TesteService {
                 String resposta = response.body();
                 String[] primeiraParte = resposta.split("key: 'ds:10'");
                 String[] segundaParte = primeiraParte[1].split("sideChannel");
-                String terceiraParte = segundaParte[0].substring(60, segundaParte[0].length()-2);
+                String terceiraParte = segundaParte[0].substring(60, segundaParte[0].length() - 2);
                 String[] quartaParte = terceiraParte.split(",");
 
                 List<Double> valores = new ArrayList<>();
                 List<String> horas = new ArrayList<>();
                 List<String> data = new ArrayList<>();
                 List<Double> valoresVolume = new ArrayList<>();
-                for(int i =  quartaParte[25].substring(1).equals("-10800]]") ? 26:25; i < quartaParte.length; i += 15){
+                for (int i = quartaParte[25].substring(1).equals("-10800]]") ? 26 : 25; i < quartaParte.length; i += 15) {
                     valores.add(Double.valueOf(quartaParte[i].substring(1)));
-                    if(quartaParte[i+6].contains("]]")){
-                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
-                        horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                    }else{
-                        valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
-                        horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                        data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
+                    if (quartaParte[i + 6].contains("]]")) {
+                        valoresVolume.add(Double.valueOf(quartaParte[i + 6].substring(0, quartaParte[i + 6].length() - 2)));
+                        horas.add(quartaParte[i - 5] + ":" + quartaParte[i - 4]);
+                        data.add(quartaParte[i - 6] + "/" + quartaParte[i - 7]);
+                    } else {
+                        valoresVolume.add(Double.valueOf(quartaParte[i + 6].substring(0, quartaParte[i + 6].length() - 1)));
+                        horas.add(quartaParte[i - 5] + ":" + quartaParte[i - 4]);
+                        data.add(quartaParte[i - 6] + "/" + quartaParte[i - 7]);
                     }
                 }
-
-
 
 
                 List<Double> variacao = new ArrayList<>();
                 AtomicReference<Double> aux = new AtomicReference<>(null);
                 valores.stream().forEach(x -> {
-                    if(aux.get() != null){
-                        variacao.add(((x/ aux.get())-1)*100);
+                    if (aux.get() != null) {
+                        variacao.add(((x / aux.get()) - 1) * 100);
                     }
                     aux.set(x);
                 });
                 List<Double> variacaoVolume = new ArrayList<>();
                 AtomicReference<Double> auxVolume = new AtomicReference<>(null);
                 valoresVolume.stream().forEach(x -> {
-                    if(auxVolume.get() != null && auxVolume.get() != 0){
-                        variacaoVolume.add(((x/ auxVolume.get())-1)*100);
+                    if (auxVolume.get() != null && auxVolume.get() != 0) {
+                        variacaoVolume.add(((x / auxVolume.get()) - 1) * 100);
                     }
                     auxVolume.set(Double.valueOf(x));
                 });
                 Double valorModa = modaValue(valores).doubleValue();
-                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum()/variacao.size()).doubleValue();
-                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolume.size()).doubleValue();
+                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()).doubleValue();
+                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolume.size()).doubleValue();
                 Double varianciaValores = variancia(variacao, valorMedia);
                 Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
                 Double covariancia = covariancia(variacao, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
                 /*Double isNormal = isNormal(valores, variancia, valorMedia);*/
 
-                if(!analiseInicial) {
+                if (!analiseInicial) {
                     /*if((valorModa < valores.get(valores.size() - 1) && valores.get(valores.size() - 1) < valorMedia) ||
                         (valorModa > valores.get(valores.size() - 1) && valores.get(valores.size() - 1) > valorMedia)){
                         System.out.println(nomeAcao+" - possibilidade de venda");
                     }*/
-                    variacaoMedia.put(nomeAcao, horas.get(horas.size()-1)+" | "+
-                            "5D Atual: " +  valores.get(valores.size() - 1).toString()+" | "+
-                            headShoulderPattern(valores)+ " | "+
-                            headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores)+" | "+
-                            trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data)+"\n"+
-                            
-                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
+                    variacaoMedia.put(nomeAcao, horas.get(horas.size() - 1) + " | " +
+                            "5D Atual: " + valores.get(valores.size() - 1).toString() + " | " +
+                            headShoulderPattern(valores) + " | " +
+                            headShoulderReversePattern(valores) + " | " +
+                            cunhaDeBaixaPattern(valores) + " | " +
+                            trinaguloDeReversaoPattern(valores) + " | " +
+                            cestoBasePattern(valores, variacaoVolume) + "\n" +
+
+                            predicaoPolinomialLagrange(variacao, variacaoVolume) + " | " +
                             predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
 
-            Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
-                                            modaValue(valores).doubleValue() : Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
+                Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue() ?
+                        modaValue(valores).doubleValue() : Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue();
 
-            if( valores.get(valores.size()-1).doubleValue() < menorValorMediaModa){
-                if(analiseInicial){
-                    variacaoMedia.put(nomeAcao, horas.get(horas.size()-1)+" | "+
-                            "5D Atual: " +  valores.get(valores.size() - 1).toString()+" | "+
-                            headShoulderPattern(valores)+ " | "+
-                            headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores)+" | "+
-                            trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data)+"\n"+
-                            
-                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
-                            predicaoPolinomialNewton(variacao, variacaoVolume));
+                if (valores.get(valores.size() - 1).doubleValue() < menorValorMediaModa) {
+                    if (analiseInicial) {
+                        variacaoMedia.put(nomeAcao, horas.get(horas.size() - 1) + " | " +
+                                "5D Atual: " + valores.get(valores.size() - 1).toString() + " | " +
+                                headShoulderPattern(valores) + " | " +
+                                headShoulderReversePattern(valores) + " | " +
+                                cunhaDeBaixaPattern(valores) + " | " +
+                                trinaguloDeReversaoPattern(valores) + " | " +
+                                cestoBasePattern(valores, variacaoVolume) + "\n" +
+
+                                predicaoPolinomialLagrange(variacao, variacaoVolume) + " | " +
+                                predicaoPolinomialNewton(variacao, variacaoVolume));
+                    }
                 }
-            }
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -340,171 +350,555 @@ public class TesteService {
 
         return variacaoMedia;
     }
-    public LinkedHashMap<String, String> analiseTemporalMes(List<String> nomesAcoes, boolean analiseInicial){
-        LinkedHashMap<String, String> variacaoMedia = new LinkedHashMap<>();
+
+    public void analiseTemporalMes(List<String> nomesAcoes, String endpointAvaliado, Map<String, String> mapResultado) {
         nomesAcoes.forEach(nm -> {
             String nomeAcao = "";
-            if(!nm.contains(">")){
+            if (!nm.contains(">")) {
                 nomeAcao = nm;
-            }else{
+            } else {
                 nomeAcao = nm.split(">")[4];
             }
             var client = HttpClient.newHttpClient();
-
-            var requestMaisAtivos = HttpRequest.newBuilder(
-                            URI.create("https://www.google.com/finance/quote/"+(!nomeAcao.equals("BTC-USD") && !nomeAcao.equals("ETH-USD") ? nomeAcao+":BVMF" : nomeAcao)+"?window=5D"))
-                    .header("accept", "application/json")
-                    .build();
-            HttpResponse<String> response = null;
-            List<Integer> testeVolume = new ArrayList<>();
-            testeVolume.add(Integer.valueOf(4));
-            testeVolume.add(Integer.valueOf(1));
-            testeVolume.add(Integer.valueOf(-1));
-            List<Double> testeValores = new ArrayList<>();
-            testeValores.add(Double.valueOf(-1));
-            testeValores.add(Double.valueOf(0));
-            testeValores.add(Double.valueOf(2));
+//            WebDriverManager.chromedriver().setup();
+            Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
+            System.setProperty("webdriver.chrome.silentOutput", "true");
+            ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.addArguments(new String[]{"--remote-allow-origins=*"});
+            chromeOptions.addArguments(new String[]{"test-type"});
+            chromeOptions.addArguments(new String[]{"start-maximized"});
+            chromeOptions.addArguments(new String[]{"disable-web-security"});
+            chromeOptions.addArguments(new String[]{"allow-running-insecure-content"});
+            chromeOptions.addArguments(new String[]{"--log-level=3"});
+            chromeOptions.addArguments(new String[]{"--ignore-ssl-errors=yes"});
+            chromeOptions.addArguments(new String[]{"--ignore-certificate-errors"});
+            chromeOptions.addArguments(new String[]{"--kiosk-printing"});
+            chromeOptions.addArguments(new String[]{"--lang=pt-BR"});
+            chromeOptions.addArguments(new String[]{"--disable-gpu"});
+            chromeOptions.addArguments(new String[]{"--disable-dev-shm-usage"});
+            chromeOptions.addArguments(new String[]{"--no-sandbox"});
+            chromeOptions.addArguments(new String[]{"--disable-session-crashed-bubble"});
+            chromeOptions.addArguments(new String[]{"--no-sandbox"});
+            chromeOptions.addArguments(new String[]{"--disable-dev-shm-usage"});
+            chromeOptions.addArguments(new String[]{"--disable-blink-features=AutomationControlled"});
+            chromeOptions.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+            chromeOptions.setExperimentalOption("useAutomationExtension", (Object) null);
+            chromeOptions.setUnhandledPromptBehaviour(UnexpectedAlertBehaviour.IGNORE);
+            chromeOptions.setAcceptInsecureCerts(true);
+            chromeOptions.addArguments("--headless");
+            WebDriver chromeWebDriver = new ChromeDriver(chromeOptions);
             try {
-                response = client.send(requestMaisAtivos, HttpResponse.BodyHandlers.ofString());
-                String resposta = response.body();
-                String[] primeiraParte = resposta.split("key: 'ds:11'");
-                String[] segundaParte = primeiraParte[1].split("sideChannel");
-                String terceiraParte = segundaParte[0].substring(60, segundaParte[0].length()-2);
-                String[] quartaParte = terceiraParte.split(",");
-
+                chromeWebDriver.get("https://www.google.com/finance/quote/" + (!endpointAvaliado.equals("cryptocurrencies") ? nomeAcao + ":BVMF" : nomeAcao + "-USD") + "?window=1M");
                 List<Double> valores = new ArrayList<>();
-                List<String> horas = new ArrayList<>();
-                List<String> data = new ArrayList<>();
-                List<Double> valoresVolume = new ArrayList<>();
-                if(nomeAcao.equals("BTC-USD") || nomeAcao.equals("ETH-USD")){
-                    for(int i =  8; i < quartaParte.length - 15; i += 15){
-                        valores.add(Double.valueOf(quartaParte[i].substring(1)));
-                        if(quartaParte[i-1].contains("[]]")){
-                            valoresVolume.add(Double.valueOf(quartaParte[i-7] + "." + (quartaParte[i-6].length() == 1 ? "0"+quartaParte[i-6] : quartaParte[i-6])));
-                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                        } else if(quartaParte[i-1].contains("]]")){
-                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
-                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                        }else{
-                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
-                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                        }
-                    }
-                    var valoresAux = new ArrayList<Double>();
-                    for(int i =  0; i < valores.size(); i += 3){
-                        if(i+1 < valores.size() && i+2 < valores.size()){
-                            valoresAux.add((valores.get(i) + valores.get(i+1) + valores.get(i+2)));
-                        }
-                    }
-
-                    var valoresVolumeAux = new ArrayList<Double>();
-                    for(int i =  0; i < valoresVolume.size(); i += 3){
-                        if(i+1 < valoresVolume.size() && i+2 < valoresVolume.size()) {
-                            valoresVolumeAux.add((valoresVolume.get(i) + valoresVolume.get(i + 1) + valoresVolume.get(i + 2)));
-                        }
-                    }
-                    valores = valoresAux;
-                    valoresVolume = valoresVolumeAux;
-                }else{
-                    for(int i =  quartaParte[8].substring(1).equals("-10800]]") ? 9:10; i < quartaParte.length; i += 15){
-                        valores.add(Double.valueOf(quartaParte[i].substring(1)));
-                        if(quartaParte[i+6].contains("[]]")){
-                            valoresVolume.add(Double.valueOf("0"));
-                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                        } else if(quartaParte[i+6].contains("]]")){
-                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-2)));
-                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                        }else{
-                            valoresVolume.add(Double.valueOf(quartaParte[i+6].substring(0,quartaParte[i+6].length()-1)));
-                            horas.add(quartaParte[i-5]+":"+quartaParte[i-4]);
-                            data.add(quartaParte[i-6]+"/"+quartaParte[i-7]);
-                        }
-                    }
-                }
-
-
-
-
-                List<Double> variacao = new ArrayList<>();
-                AtomicReference<Double> aux = new AtomicReference<>(null);
-                valores.stream().forEach(x -> {
-                    if(aux.get() != null){
-                        variacao.add(((x/ aux.get())-1)*100);
-                    }
-                    aux.set(x);
-                });
                 List<Double> variacaoVolume = new ArrayList<>();
-                AtomicReference<Double> auxVolume = new AtomicReference<>(null);
-                valoresVolume.stream().forEach(x -> {
-                    if(auxVolume.get() != null && auxVolume.get() != 0){
-                        variacaoVolume.add(((x / auxVolume.get())-1)*100);
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String regex = ".*[a-zA-Z].*";
+                if (!chromeWebDriver.findElement(By.tagName("body")).getText().contains("Não há dados")
+                        && !chromeWebDriver.findElement(By.tagName("body")).getText().contains("Não encontramos resultados para sua pesquisa.")) {
+                    WebElement element = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(10)).until(
+                            ExpectedConditions.visibilityOfElementLocated(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + (!endpointAvaliado.equals("cryptocurrencies") ? nomeAcao + ":BVMF" : nomeAcao + "-USD") + "?window=1M'] path[fill='none']"))
+                    );
+                    List<String> input = Arrays.stream(element.getAttribute("d").split("L")).map(val -> val.replace("M", "")).collect(Collectors.toList());
+                    List<Double> finalVariacaoVolume = variacaoVolume;
+                    List<Double> finalValores = valores;
+                    input.forEach(val -> {
+                        String[] valSpliter = val.split(",");
+                        finalValores.add(Double.valueOf(valSpliter[0]));
+                        finalVariacaoVolume.add(Double.valueOf(valSpliter[1]));
+                    });
+                    Collections.reverse(variacaoVolume);
+                    Double valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue();
+                    Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolume.size()).doubleValue();
+                    Double varianciaValores = variancia(valores, valorMedia);
+                    Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                    Double covariancia = covariancia(valores, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                    Double lagrangeValor = predicaoPolinomialLagrange(valores, variacaoVolume);
+                    if (lagrangeValor > 0 && covariancia > 0) {
+                        String pattern = "R\\$\\d+\\.\\d+"; // Padrão regex para capturar o valor
+                        Pattern p = Pattern.compile(pattern);
+                        Matcher m = p.matcher(chromeWebDriver.findElement(By.tagName("body")).getText());
+                        Double value = null;
+                        if (m.find()) {
+                            String valueStr = m.group().replace("R$", "").trim(); // Captura o valor como uma string
+                            value = Double.parseDouble(valueStr.replace(",", ".")); // Converte a string para double
+                        }
+                        Double variacaoEstimada = null;
+                        if (value != null) {
+                            variacaoEstimada = -0.0020639 * Math.pow(value, 2.0) + 0.1023252 * value + 0.1423548;
+                        } else {
+                            variacaoEstimada = 0.0;
+                        }
+                        mapResultado.put(nomeAcao, "1M covariancia: " + String.format("%.4f", covariancia) + " | 1M " +
+                                "PREDICAO POLINOMIAL LAGRANGE - ( " + lagrangeValor + " )" + " | 1M " +
+                                "PREDICAO POLINOMIAL NEWTON - ( " + predicaoPolinomialNewton(valores, variacaoVolume) + " ) | Variação Estimada % - ( " + variacaoEstimada + " ) | Valor de Venda Estimada - ( " + value * (1 + (variacaoEstimada / 100)) + " ) ");
+
+
+                        valores = new ArrayList<>();
+                        variacaoVolume = new ArrayList<>();
+                        chromeWebDriver.get("https://www.google.com/finance/quote/" + (!endpointAvaliado.equals("cryptocurrencies") ? nomeAcao + ":BVMF" : nomeAcao + "-USD") + "?window=5D");
+                        valores = new ArrayList<>();
+                        variacaoVolume = new ArrayList<>();
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        try {
+                            if (!chromeWebDriver.findElement(By.tagName("body")).getText().contains("Não há dados")
+                                    && !chromeWebDriver.findElement(By.tagName("body")).getText().contains("Não encontramos resultados para sua pesquisa.")) {
+                                element = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(10)).until(
+                                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + (!endpointAvaliado.equals("cryptocurrencies") ? nomeAcao + ":BVMF" : nomeAcao + "-USD") + "?window=5D'] path[fill='none']"))
+                                );
+                                input = Arrays.stream(element.getAttribute("d").split("L")).map(val -> val.replace("M", "")).collect(Collectors.toList());
+                                List<Double> finalValores1 = valores;
+                                List<Double> finalVariacaoVolume1 = variacaoVolume;
+                                input.forEach(val -> {
+                                    String[] valSpliter = val.split(",");
+                                    finalValores1.add(Double.valueOf(valSpliter[0]));
+                                    finalVariacaoVolume1.add(Double.valueOf(valSpliter[1]));
+                                });
+
+                                valores = valores.subList(valores.size() - 31, valores.size());
+                                Collections.reverse(variacaoVolume);
+                                variacaoVolume = variacaoVolume.subList(variacaoVolume.size() - 31, variacaoVolume.size());
+                                valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue();
+                                valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolume.size()).doubleValue();
+                                varianciaValores = variancia(valores, valorMedia);
+                                varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                                covariancia = covariancia(valores, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                                lagrangeValor = predicaoPolinomialLagrange(valores, variacaoVolume);
+                                if (lagrangeValor > 0 && covariancia > 0) {
+                                    mapResultado.put(nomeAcao, mapResultado.get(nomeAcao) + " | 5D covariancia: " + String.format("%.4f", covariancia) + " | 5D " +
+                                            "PREDICAO POLINOMIAL LAGRANGE - ( " + predicaoPolinomialLagrange(valores, variacaoVolume) + " ) | 5D " +
+                                            "PREDICAO POLINOMIAL NEWTON - ( " + predicaoPolinomialNewton(valores, variacaoVolume) + " ) ");
+                                } else {
+                                    mapResultado.remove(nomeAcao);
+                                }
+                            }
+                        } catch (Exception ex) {
+                            System.out.printf(nomeAcao);
+                            ex.printStackTrace();
+                        }
                     }
-                    auxVolume.set(x);
-                });
-                Double valorModa = modaValue(valores).doubleValue();
-                Double valorMedia = Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum()/variacao.size()).doubleValue();
-                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolume.size()).doubleValue();
-                Double varianciaValores = variancia(variacao, valorMedia);
-                Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
-                Double covariancia = covariancia(variacao, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
-                /*Double isNormal = isNormal(valores, variancia, valorMedia);*/
 
-                if(!analiseInicial) {
-                    /*if((valorModa < valores.get(valores.size() - 1) && valores.get(valores.size() - 1) < valorMedia) ||
-                        (valorModa > valores.get(valores.size() - 1) && valores.get(valores.size() - 1) > valorMedia)){
-                        System.out.println(nomeAcao+" - possibilidade de venda");
-                    }*/
-                    variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                        String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                        "5D covariancia: "+ String.format("%.4f", covariancia) + " | " +
-                        "5D "+ moda(valores) + " | " +
-                        "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
-                        "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
-                        horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
-                        headShoulderReversePattern(valores)+" | "+
-                        cunhaDeBaixaPattern(valores)+" | "+
-                        trinaguloDeReversaoPattern(valores)+" | "+
-                        cestoBasePattern(valores, data) + "\n"+
-                        
-                        predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
-                        predicaoPolinomialNewton(variacao, variacaoVolume));
                 }
-
-            Double menorValorMediaModa = modaValue(valores).doubleValue() <= Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue() ?
-                                            modaValue(valores).doubleValue() : Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum()/valores.size()).doubleValue();
-
-            if( valores.get(valores.size()-1).doubleValue() < menorValorMediaModa){
-                if(analiseInicial){
-                    variacaoMedia.put(nomeAcao, String.format("%.2f", Double.valueOf(variacao.stream().mapToDouble(Double::doubleValue).sum() / variacao.size()) * 100) + " | " +
-                            String.format("%.2f", variacaoVolume.stream().mapToDouble(Double::doubleValue).sum()/valoresVolume.size()) + " | " +
-                            "5D covariancia: "+  String.format("%.4f", covariancia) + " | " +
-                            "5D "+  moda(valores) + " | " +
-                            "5D Media: " +  String.format("%.2f", (valores.stream().mapToDouble(Double::doubleValue).sum()) / valores.size()) + " | " +
-                            "5D Atual: " +  valores.get(valores.size() - 1).toString()+"\n"+
-                            horas.get(horas.size()-1)+" | "+headShoulderPattern(valores)+ " | "+
-                            headShoulderReversePattern(valores)+" | "+
-                            cunhaDeBaixaPattern(valores)+" | "+
-                            trinaguloDeReversaoPattern(valores)+" | "+
-                            cestoBasePattern(valores, data)+ "\n"+
-                            
-                            predicaoPolinomialLagrange(variacao, variacaoVolume)+ " | "+
-                            predicaoPolinomialNewton(variacao, variacaoVolume));
-                }
+            } catch (Exception ex) {
+                System.out.printf(nomeAcao);
+                ex.printStackTrace();
             }
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            chromeWebDriver.close();
         });
-
-        return variacaoMedia;
     }
 
-    public String moda(List<Double> valores){
+    public void analiseCoin(List<String> nomesMoedas, Map<String, String> mapResultado) {
+        nomesMoedas.forEach(nm -> {
+            Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
+            System.setProperty("webdriver.chrome.silentOutput", "true");
+
+            ChromeOptions chromeOptions = chromeOptionsSemHeadLess();
+//            ChromeOptions chromeOptionsToProxy = chromeOptionsComHeadLess();
+//
+//            List<Map<String,Object>> proxies = getFreeProxies(new ChromeDriver(chromeOptionsToProxy));
+//
+//            Random random = new Random();
+//            int randomNumber = random.nextInt(proxies.size());
+//
+//            Proxy proxy = new Proxy();
+//            proxy.setHttpProxy(proxies.get(randomNumber).get("IP Address").toString() + ":" + proxies.get(randomNumber).get("Port").toString());
+//            proxy.setSslProxy(proxies.get(randomNumber).get("IP Address").toString() + ":" + proxies.get(randomNumber).get("Port").toString());
+//            chromeOptions.setProxy(proxy);
+            WebDriver chromeWebDriver = new ChromeDriver(chromeOptions);
+            try {
+                chromeWebDriver.get("https://www.google.com/finance/quote/" + nm);
+                List<Double> valores = new ArrayList<>();
+                List<Double> variacaoVolume = new ArrayList<>();
+                WebDriverWait wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+//                wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("form:nth-child(1) > div > div > button"))).click();
+//                ExpectedConditions.visibilityOfElementLocated(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + nm + ":BVMF" + "?window=1M'] path[fill='none']"))
+
+                List<WebElement> elements = null;
+                String pontos = null;
+                try {
+                    elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + nm + "'] path")));
+                    pontos = elements.get(elements.size() - 1).getAttribute("d");
+                }catch (Exception ex){
+                    elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + nm + "'] path")));
+                    pontos = elements.get(elements.size() - 1).getAttribute("d");
+                }
+//                List<String> input = Arrays.stream(element.getAttribute("d").split("L")).map(val -> val.replace("M", "")).collect(Collectors.toList());
+                List<String> input = new ArrayList<>();
+                Pattern pattern = Pattern.compile("-?\\d+\\.\\d+");
+                Matcher matcher = pattern.matcher(pontos);
+
+                while (matcher.find()) {
+                    input.add(matcher.group());
+                }
+                List<Double> finalVariacaoVolume = variacaoVolume;
+                List<Double> finalValores = valores;
+                List<Double> finalValores2 = finalValores;
+                List<Double> finalVariacaoVolume2 = finalVariacaoVolume;
+                List<String> finalInput = input;
+                input.forEach(val -> {
+                    if(finalInput.indexOf(val)%2 !=0 ){
+                        finalValores2.add(Double.valueOf(val));
+                    }else{
+                        finalVariacaoVolume2.add(Double.valueOf(val));
+                    }
+//                    String[] valSpliter = val.split(",");
+//                    finalValores2.add(Double.valueOf(valSpliter[0]));
+//                    finalVariacaoVolume2.add(Double.valueOf(valSpliter[1]));
+                });
+                Collections.reverse(variacaoVolume);
+                List<Double> valoresMedia = new ArrayList<>();
+                List<Double> variacaoVolumeMedia = new ArrayList<>();
+                if(valores.size() != variacaoVolume.size()){
+                    valores = valores.subList(0, valores.size()/2);
+                }
+                for(int i = 0; i < valores.size(); i += Double.valueOf(valores.size()/24).intValue()){
+                    List<Double> valoresAux = new ArrayList<>();
+                    List<Double> variacaoVolumeAux = new ArrayList<>();
+                    if(valores.size() >= i + Double.valueOf(valores.size()/24).intValue()) {
+                        valoresAux = valores.subList(i, i + Double.valueOf(valores.size() / 24).intValue());
+                        variacaoVolumeAux = variacaoVolume.subList(i, i + Double.valueOf(variacaoVolume.size() / 24).intValue());
+                    }else{
+                        valoresAux = valores.subList(i, valores.size());
+                        variacaoVolumeAux = variacaoVolume.subList(i, variacaoVolume.size());
+                    }
+                    valoresMedia.add(valoresAux.stream().mapToDouble(Double::doubleValue).sum()/valoresAux.size());
+                    variacaoVolumeMedia.add(variacaoVolumeAux.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolumeAux.size());
+                }
+                if(valoresMedia.size() > 25){
+                    valoresMedia = valoresMedia.subList(valoresMedia.size()-25, valoresMedia.size());
+                }
+
+                if(variacaoVolumeMedia.size() > 25){
+                    variacaoVolumeMedia = variacaoVolumeMedia.subList(variacaoVolumeMedia.size()-25, variacaoVolumeMedia.size());
+                }
+
+                Double valorMedia = Double.valueOf(valoresMedia.stream().mapToDouble(Double::doubleValue).sum() / valoresMedia.size()).doubleValue();
+                Double valorMediaVolume = Double.valueOf(variacaoVolumeMedia.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolumeMedia.size()).doubleValue();
+                Double varianciaValores = variancia(valoresMedia, valorMedia);
+                Double varianciaVolume = variancia(variacaoVolumeMedia, valorMediaVolume);
+                Double covariancia = covariancia(valoresMedia, variacaoVolumeMedia, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                Double lagrangeValor = predicaoPolinomialLagrange(valoresMedia, variacaoVolumeMedia);
+                mapResultado.put(nm, "1D covariancia: " + String.format("%.4f", covariancia) + " | ABAIXO MÉDIA 1D -( " + String.valueOf(valorMediaVolume >  variacaoVolume.get(variacaoVolume.size()-1)) +" )" + " | 1D " +
+                                "PREDICAO POLINOMIAL LAGRANGE - ( " + lagrangeValor + " )" + " | 1D " +
+                                "PREDICAO POLINOMIAL NEWTON - ( " + predicaoPolinomialNewton(valoresMedia, variacaoVolumeMedia)+" )");
+
+//                wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+//                WebElement elementClickMes = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@id='5dayTab']")));
+//                elementClickMes.click();
+
+                chromeWebDriver.get("https://www.google.com/finance/quote/" + nm + "?window=5D");
+
+                wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+                WebElement element = null;
+                try {
+                    element = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + nm + "'] path[fill='none']")));
+                    pontos = element.getAttribute("d");
+                }catch (Exception ex){
+                    element = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + nm + "'] path[fill='none']")));
+                    pontos = element.getAttribute("d");
+                }
+//                WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + nm + "'] path[fill='none']")));
+//                pontos = element.getAttribute("d");
+//                List<String> input = Arrays.stream(element.getAttribute("d").split("L")).map(val -> val.replace("M", "")).collect(Collectors.toList());
+                input = new ArrayList<>();
+                Pattern patternDois = Pattern.compile("-?\\d+\\.\\d+");
+                Matcher matcherDois = patternDois.matcher(pontos);
+
+                while (matcherDois.find()) {
+                    input.add(matcherDois.group());
+                }
+                finalVariacaoVolume = variacaoVolume;
+                finalValores = valores;
+                List<Double> finalValores1 = finalValores;
+                List<Double> finalVariacaoVolume1 = finalVariacaoVolume;
+                List<String> finalInput1 = input;
+                input.forEach(val -> {
+                    if(finalInput1.indexOf(val)%2 !=0 ){
+                        finalValores1.add(Double.valueOf(val));
+                    }else{
+                        finalVariacaoVolume1.add(Double.valueOf(val));
+                    }
+//                    String[] valSpliter = val.split(",");
+//                    finalValores1.add(Double.valueOf(valSpliter[0]));
+//                    finalVariacaoVolume1.add(Double.valueOf(valSpliter[1]));
+                });
+                Collections.reverse(variacaoVolume);
+                valoresMedia = new ArrayList<>();
+                variacaoVolumeMedia = new ArrayList<>();
+                if(valores.size() != variacaoVolume.size()){
+                    valores = valores.subList(0, valores.size()/2);
+                }
+//                valores = valores.subList(0, valores.size()/2);
+                for(int i = 0; i < valores.size(); i += Double.valueOf(valores.size()/24).intValue()){
+                    List<Double> valoresAux = new ArrayList<>();
+                    List<Double> variacaoVolumeAux = new ArrayList<>();
+                    if(valores.size() >= i + Double.valueOf(valores.size()/24).intValue()) {
+                        valoresAux = valores.subList(i, i + Double.valueOf(valores.size() / 24).intValue());
+                        variacaoVolumeAux = variacaoVolume.subList(i, i + Double.valueOf(variacaoVolume.size() / 24).intValue());
+                    }else{
+                        valoresAux = valores.subList(i, valores.size());
+                        variacaoVolumeAux = variacaoVolume.subList(i, variacaoVolume.size());
+                    }
+                    valoresMedia.add(valoresAux.stream().mapToDouble(Double::doubleValue).sum()/valoresAux.size());
+                    variacaoVolumeMedia.add(variacaoVolumeAux.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolumeAux.size());
+                }
+
+                if(valoresMedia.size() > 25){
+                    valoresMedia = valoresMedia.subList(valoresMedia.size()-25, valoresMedia.size());
+                }
+
+                if(variacaoVolumeMedia.size() > 25){
+                    variacaoVolumeMedia = variacaoVolumeMedia.subList(variacaoVolumeMedia.size()-25, variacaoVolumeMedia.size());
+                }
+
+                valorMedia = Double.valueOf(valoresMedia.stream().mapToDouble(Double::doubleValue).sum() / valoresMedia.size()).doubleValue();
+                valorMediaVolume = Double.valueOf(variacaoVolumeMedia.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolumeMedia.size()).doubleValue();
+                varianciaValores = variancia(valoresMedia, valorMedia);
+                varianciaVolume = variancia(variacaoVolumeMedia, valorMediaVolume);
+                covariancia = covariancia(valoresMedia, variacaoVolumeMedia, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                lagrangeValor = predicaoPolinomialLagrange(valoresMedia, variacaoVolumeMedia);
+                mapResultado.put(nm, mapResultado.get(nm) + " - 1S covariancia: " + String.format("%.4f", covariancia) + " | ABAIXO MÉDIA 1S -( " + String.valueOf(valorMediaVolume >  variacaoVolume.get(variacaoVolume.size()-1)) +" )" + " | 1S " +
+                        "PREDICAO POLINOMIAL LAGRANGE - ( " + lagrangeValor + " )" + " | 1S " +
+                        "PREDICAO POLINOMIAL NEWTON - ( " + predicaoPolinomialNewton(valoresMedia, variacaoVolumeMedia)+" )");
+                chromeWebDriver.close();
+            } catch (Exception e) {
+                chromeWebDriver.close();
+            }
+        });
+    }
+    public void analiseCoinCoinbase(List<String> nomesMoedas, Map<String, String> mapResultado, Boolean usarProxy) {
+        ChromeOptions chromeOptionsToProxy = null;
+        List<Map<String, Object>> proxies = null;
+        if(usarProxy) {
+            chromeOptionsToProxy = chromeOptionsComHeadLess();
+
+            proxies = getFreeProxies(new ChromeDriver(chromeOptionsToProxy));
+        }
+
+        List<Map<String, Object>> finalProxies = proxies;
+        AtomicReference<Proxy> proxyTestado = new AtomicReference<Proxy>();
+        proxyTestado.set(null);
+        System.out.println("==========================================================ANALISE=================================================================");
+        nomesMoedas.forEach(nm -> {
+            Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
+            System.setProperty("webdriver.chrome.silentOutput", "true");
+            ChromeOptions chromeOptions = chromeOptionsSemHeadLess();
+            if(usarProxy) {
+                while(proxyTestado.get() == null) {
+                    ChromeDriver teste = null;
+                    try {
+                        Random random = new Random();
+                        int randomNumber = random.nextInt(finalProxies.size());
+
+                        Proxy proxy = new Proxy();
+                        proxy.setHttpProxy(finalProxies.get(randomNumber).get("IP Address").toString() + ":" + finalProxies.get(randomNumber).get("Port").toString());
+                        proxy.setSslProxy(finalProxies.get(randomNumber).get("IP Address").toString() + ":" + finalProxies.get(randomNumber).get("Port").toString());
+                        ChromeOptions chromeOptionsToTeste = chromeOptionsComHeadLess();
+                        chromeOptionsToTeste.setProxy(proxy);
+                        teste = new ChromeDriver(chromeOptionsToTeste);
+                        teste.get("https://www.google.com");
+                        if (teste.getTitle().equals("Google")) {
+                            proxyTestado.set(proxy);
+                            teste.close();
+                            break;
+                        } else {
+                            teste.close();
+                        }
+                    }catch (Exception ex){
+                        teste.close();
+                    }
+                }
+                chromeOptions.setProxy(proxyTestado.get());
+            }
+            WebDriver chromeWebDriver = new ChromeDriver(chromeOptions);
+            try {
+                List<Double> covariancias = new ArrayList<>();
+                chromeWebDriver.get("https://www.coinbase.com/pt-br/price/" + nm);
+                List<Double> valores = new ArrayList<>();
+                List<Double> variacaoVolume = new ArrayList<>();
+                WebDriverWait wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+//                ExpectedConditions.visibilityOfElementLocated(By.cssSelector("g[mask*='url(https://www.google.com/finance/quote/" + nm + ":BVMF" + "?window=1M'] path[fill='none']"))
+
+                List<WebElement> elements = null;
+//                String pontos = null;
+                WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div > svg > g > path:nth-child(1)")));
+                List<String> input = Arrays.stream(element.getAttribute("d").split("L")).map(val -> val.replace("M", "")).collect(Collectors.toList());
+                List<Double> finalVariacaoVolume = variacaoVolume;
+                List<Double> finalValores = valores;
+                List<Double> finalValores2 = finalValores;
+                List<Double> finalVariacaoVolume2 = finalVariacaoVolume;
+                input.forEach(val -> {
+                    String[] valSpliter = val.split(",");
+                    finalValores2.add(Double.valueOf(valSpliter[0]));
+                    finalVariacaoVolume2.add(Double.valueOf(valSpliter[1]));
+                });
+                Collections.reverse(variacaoVolume);
+//                List<Double> valoresMedia = new ArrayList<>();
+//                List<Double> variacaoVolumeMedia = new ArrayList<>();
+//                if(valores.size() != variacaoVolume.size()){
+//                    valores = valores.subList(0, valores.size()/2);
+//                }
+//                for(int i = 0; i < valores.size(); i += Double.valueOf(valores.size()/24).intValue()){
+//                    List<Double> valoresAux = new ArrayList<>();
+//                    List<Double> variacaoVolumeAux = new ArrayList<>();
+//                    if(valores.size() >= i + Double.valueOf(valores.size()/24).intValue()) {
+//                        valoresAux = valores.subList(i, i + Double.valueOf(valores.size() / 24).intValue());
+//                        variacaoVolumeAux = variacaoVolume.subList(i, i + Double.valueOf(variacaoVolume.size() / 24).intValue());
+//                    }else{
+//                        valoresAux = valores.subList(i, valores.size());
+//                        variacaoVolumeAux = variacaoVolume.subList(i, variacaoVolume.size());
+//                    }
+//                    valoresMedia.add(valoresAux.stream().mapToDouble(Double::doubleValue).sum()/valoresAux.size());
+//                    variacaoVolumeMedia.add(variacaoVolumeAux.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolumeAux.size());
+//                }
+//                if(valoresMedia.size() > 25){
+//                    valoresMedia = valoresMedia.subList(valoresMedia.size()-25, valoresMedia.size());
+//                }
+//
+//                if(variacaoVolumeMedia.size() > 25){
+//                    variacaoVolumeMedia = variacaoVolumeMedia.subList(variacaoVolumeMedia.size()-25, variacaoVolumeMedia.size());
+//                }
+
+                Double valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue();
+                Double valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolume.size()).doubleValue();
+                Double varianciaValores = variancia(valores, valorMedia);
+                Double varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                Double covariancia = covariancia(valores, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                covariancias.add(covariancia);
+//                Double lagrangeValor = predicaoPolinomialLagrange(valoresMedia, variacaoVolumeMedia);
+                mapResultado.put(nm, "1D: " + String.format("%.4f", covariancia));
+
+                wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+                WebElement elementClicSemanal = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button/span[text()='1 SEM.' or text()='1W']")));
+                elementClicSemanal.click();
+
+                wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+                element = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div > svg > g > path:nth-child(1)")));
+                input = Arrays.stream(element.getAttribute("d").split("L")).map(val -> val.replace("M", "")).collect(Collectors.toList());
+
+                finalVariacaoVolume = variacaoVolume;
+                finalValores = valores;
+                List<Double> finalValores1 = finalValores;
+                List<Double> finalVariacaoVolume1 = finalVariacaoVolume;
+                input.forEach(val -> {
+                    String[] valSpliter = val.split(",");
+                    finalValores1.add(Double.valueOf(valSpliter[0]));
+                    finalVariacaoVolume1.add(Double.valueOf(valSpliter[1]));
+                });
+                Collections.reverse(variacaoVolume);
+//                valoresMedia = new ArrayList<>();
+//                variacaoVolumeMedia = new ArrayList<>();
+//                if(valores.size() != variacaoVolume.size()){
+//                    valores = valores.subList(0, valores.size()/2);
+//                }
+//                for(int i = 0; i < valores.size(); i += Double.valueOf(valores.size()/24).intValue()){
+//                    List<Double> valoresAux = new ArrayList<>();
+//                    List<Double> variacaoVolumeAux = new ArrayList<>();
+//                    if(valores.size() >= i + Double.valueOf(valores.size()/24).intValue()) {
+//                        valoresAux = valores.subList(i, i + Double.valueOf(valores.size() / 24).intValue());
+//                        variacaoVolumeAux = variacaoVolume.subList(i, i + Double.valueOf(variacaoVolume.size() / 24).intValue());
+//                    }else{
+//                        valoresAux = valores.subList(i, valores.size());
+//                        variacaoVolumeAux = variacaoVolume.subList(i, variacaoVolume.size());
+//                    }
+//                    valoresMedia.add(valoresAux.stream().mapToDouble(Double::doubleValue).sum()/valoresAux.size());
+//                    variacaoVolumeMedia.add(variacaoVolumeAux.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolumeAux.size());
+//                }
+//
+//                if(valoresMedia.size() > 25){
+//                    valoresMedia = valoresMedia.subList(valoresMedia.size()-25, valoresMedia.size());
+//                }
+//
+//                if(variacaoVolumeMedia.size() > 25){
+//                    variacaoVolumeMedia = variacaoVolumeMedia.subList(variacaoVolumeMedia.size()-25, variacaoVolumeMedia.size());
+//                }
+
+                valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue();
+                valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolume.size()).doubleValue();
+                varianciaValores = variancia(valores, valorMedia);
+                varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                covariancia = covariancia(valores, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                covariancias.add(covariancia);
+                Double lagrangeValor = predicaoPolinomialLagrange(valores, variacaoVolume);
+                mapResultado.put(nm, mapResultado.get(nm) + " | 1S: " + String.format("%.4f", covariancia));
+
+                wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+                WebElement elementClicSemana2 = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button/span[text()='1H']")));
+                elementClicSemana2.click();
+
+                wait = new WebDriverWait(chromeWebDriver, Duration.ofSeconds(20));
+                element = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div > svg > g > path:nth-child(1)")));
+                input = Arrays.stream(element.getAttribute("d").split("L")).map(val -> val.replace("M", "")).collect(Collectors.toList());
+
+                finalVariacaoVolume = variacaoVolume;
+                finalValores = valores;
+                List<Double> finalValores3 = finalValores;
+                List<Double> finalVariacaoVolume3 = finalVariacaoVolume;
+                input.forEach(val -> {
+                    String[] valSpliter = val.split(",");
+                    finalValores3.add(Double.valueOf(valSpliter[0]));
+                    finalVariacaoVolume3.add(Double.valueOf(valSpliter[1]));
+                });
+                Collections.reverse(variacaoVolume);
+//                valoresMedia = new ArrayList<>();
+//                variacaoVolumeMedia = new ArrayList<>();
+//                if(valores.size() != variacaoVolume.size()){
+//                    valores = valores.subList(0, valores.size()/2);
+//                }
+//                for(int i = 0; i < valores.size(); i += Double.valueOf(valores.size()/24).intValue()){
+//                    List<Double> valoresAux = new ArrayList<>();
+//                    List<Double> variacaoVolumeAux = new ArrayList<>();
+//                    if(valores.size() >= i + Double.valueOf(valores.size()/24).intValue()) {
+//                        valoresAux = valores.subList(i, i + Double.valueOf(valores.size() / 24).intValue());
+//                        variacaoVolumeAux = variacaoVolume.subList(i, i + Double.valueOf(variacaoVolume.size() / 24).intValue());
+//                    }else{
+//                        valoresAux = valores.subList(i, valores.size());
+//                        variacaoVolumeAux = variacaoVolume.subList(i, variacaoVolume.size());
+//                    }
+//                    valoresMedia.add(valoresAux.stream().mapToDouble(Double::doubleValue).sum()/valoresAux.size());
+//                    variacaoVolumeMedia.add(variacaoVolumeAux.stream().mapToDouble(Double::doubleValue).sum()/variacaoVolumeAux.size());
+//                }
+//
+//                if(valoresMedia.size() > 25){
+//                    valoresMedia = valoresMedia.subList(valoresMedia.size()-25, valoresMedia.size());
+//                }
+//
+//                if(variacaoVolumeMedia.size() > 25){
+//                    variacaoVolumeMedia = variacaoVolumeMedia.subList(variacaoVolumeMedia.size()-25, variacaoVolumeMedia.size());
+//                }
+
+                valorMedia = Double.valueOf(valores.stream().mapToDouble(Double::doubleValue).sum() / valores.size()).doubleValue();
+                valorMediaVolume = Double.valueOf(variacaoVolume.stream().mapToDouble(Double::doubleValue).sum() / variacaoVolume.size()).doubleValue();
+                varianciaValores = variancia(valores, valorMedia);
+                varianciaVolume = variancia(variacaoVolume, valorMediaVolume);
+                covariancia = covariancia(valores, variacaoVolume, valorMedia, valorMediaVolume, varianciaValores, varianciaVolume);
+                covariancias.add(covariancia);
+//                Double lagrangeValor = predicaoPolinomialLagrange(valores, variacaoVolume);
+                mapResultado.put(nm, mapResultado.get(nm) + " | 1H: " + String.format("%.4f", covariancia) + " | L: " + lagrangeValor);
+
+                Date dataAtual = new Date();
+                SimpleDateFormat formatoDataHora = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                String dataHoraFormatada = formatoDataHora.format(dataAtual);
+                mapResultado.put(nm, mapResultado.get(nm) +  " | valor: " + chromeWebDriver.findElement(By.xpath("//*[@id=\"PriceSection\"]/div[1]/div[1]/div[1]/div[1]/div[2]/div/span")).getText()+ " | variação ("+dataHoraFormatada+"): " + String.format("%.4f", 0.007852*Math.pow(covariancias.get(1), 3) + 0.051244*Math.pow(covariancias.get(0), 2) - 0.000619*covariancias.get(2) + 0.006294));
+                chromeWebDriver.close();
+                if(Integer.valueOf(lagrangeValor.toString().split("E")[1]) < -169 && 0.007852*Math.pow(covariancias.get(1), 3) + 0.051244*Math.pow(covariancias.get(0), 2) - 0.000619*covariancias.get(2) + 0.006294 > 0.0450) {
+                    System.out.println("=> " + nm + "=" + mapResultado.get(nm));
+                }
+            } catch (Exception e) {
+                proxyTestado.set(null);
+                chromeWebDriver.close();
+            }
+        });
+    }
+
+    public String moda(List<Double> valores) {
         String retorno = "Moda: ";
         AtomicReference<Integer> quantidade = new AtomicReference<>(0);
         AtomicReference<Double> moda = new AtomicReference<>(0.0d);
@@ -513,11 +907,11 @@ public class TesteService {
             quantidade.set(quantidade.get() > quantidadeValor ? quantidade.get() : quantidadeValor);
             moda.set(quantidade.get() > quantidadeValor ? moda.get() : x);
         });
-        retorno += moda.get().toString() + "("+String.format("%.2f", (Double.valueOf(quantidade.get()).doubleValue()/Double.valueOf(valores.size()).doubleValue())*100)+"%)";
+        retorno += moda.get().toString() + "(" + String.format("%.2f", (Double.valueOf(quantidade.get()).doubleValue() / Double.valueOf(valores.size()).doubleValue()) * 100) + "%)";
         return retorno;
     }
 
-    public Double modaValue(List<Double> valores){
+    public Double modaValue(List<Double> valores) {
         AtomicReference<Integer> quantidade = new AtomicReference<>(0);
         AtomicReference<Double> moda = new AtomicReference<>(0.0d);
         valores.stream().forEach(x -> {
@@ -528,63 +922,66 @@ public class TesteService {
         return moda.get();
     }
 
-    public Double variancia(List<Double> valores, Double media){
+    public Double variancia(List<Double> valores, Double media) {
         Double numerador = 0d;
-        for(int i = 0; i < valores.size(); i++){
+        for (int i = 0; i < valores.size(); i++) {
             numerador = numerador + Math.pow(valores.get(i) - media, 2);
         }
-        return Math.sqrt(numerador/(valores.size()-1));
+        return Math.sqrt(numerador / (valores.size() - 1));
     }
-    public Double covariancia(List<Double> valores, List<Double> volume, Double mediaValores, Double mediaVolume, Double varianciaValores, Double varianciaVolume){
+
+    public Double covariancia(List<Double> valores, List<Double> volume, Double mediaValores, Double mediaVolume, Double varianciaValores, Double varianciaVolume) {
         Double numerador = 0d;
-        for(int i = 0; i < valores.size(); i++){
-            numerador = numerador + (valores.get(i) - mediaValores)*(volume.get(i) - mediaVolume);
+        for (int i = 0; i < valores.size(); i++) {
+            numerador = numerador + (valores.get(i) - mediaValores) * (volume.get(i) - mediaVolume);
         }
-        Double denominador = Double.valueOf(valores.size()-1);
+        Double denominador = Double.valueOf(valores.size() - 1);
 
-        return (numerador/denominador)/(varianciaValores*varianciaVolume);
+        return (numerador / denominador) / (varianciaValores * varianciaVolume);
     }
-    
-    public Double isNormal(List<Double> valores, Double variancia, Double media){
+
+    public Double isNormal(List<Double> valores, Double variancia, Double media) {
         List<Double> valoresDentroDaNormal = valores.stream().filter(x -> x > media - variancia && x < media + variancia).collect((Collectors.toList()));
-        return (Double.valueOf(valoresDentroDaNormal.size()).doubleValue()/Double.valueOf(valores.size()).doubleValue())*100;
+        return (Double.valueOf(valoresDentroDaNormal.size()).doubleValue() / Double.valueOf(valores.size()).doubleValue()) * 100;
     }
 
 
-    public String headShoulderPattern(List<Double> valores){
-        int i = valores.size() -1;
+    public String headShoulderPattern(List<Double> valores) {
+        int i = valores.size() - 1;
         int aux = 1;
-        while(i - 5*aux > 0){
-            if((valores.get(i) > valores.get(i-1*aux)) && (valores.get(i-1*aux) < valores.get(i-2*aux)) && (valores.get(i-2*aux) > valores.get(i-3*aux)) && (valores.get(i-3*aux) < valores.get(i-4*aux)) && (valores.get(i-4*aux) > valores.get(i-5*aux)) &&
-                    (new BigDecimal(valores.get(i-2*aux) - valores.get(i-4*aux)).setScale(1, RoundingMode.HALF_EVEN)).doubleValue() == 0.0){
-                return "HS - BAIXA("+aux+")";
+        while (i - 5 * aux > 0) {
+            if ((valores.get(i) > valores.get(i - 1 * aux)) && (valores.get(i - 1 * aux) < valores.get(i - 2 * aux)) && (valores.get(i - 2 * aux) > valores.get(i - 3 * aux)) && (valores.get(i - 3 * aux) < valores.get(i - 4 * aux)) && (valores.get(i - 4 * aux) > valores.get(i - 5 * aux)) &&
+                    (new BigDecimal(valores.get(i - 2 * aux) - valores.get(i - 4 * aux)).setScale(1, RoundingMode.HALF_EVEN)).doubleValue() == 0.0) {
+                return "HS - BAIXA(" + aux + ")";
             }
             aux++;
         }
 
         return "HS - NÃO ENCONTRADO";
     }
-    public String headShoulderReversePattern(List<Double> valores){
-        int i = valores.size() -1;
+
+    public String headShoulderReversePattern(List<Double> valores) {
+        int i = valores.size() - 1;
         int aux = 1;
-        while(i - 5*aux > 0){
-            if((valores.get(i) < valores.get(i-1*aux)) && (valores.get(i-1*aux) > valores.get(i-2*aux)) && (valores.get(i-2*aux) < valores.get(i-3*aux)) && (valores.get(i-3*aux) > valores.get(i-4*aux)) && (valores.get(i-4*aux) < valores.get(i-5*aux)) &&
-                    (new BigDecimal(valores.get(i-2*aux) - valores.get(i-4*aux)).setScale(1, RoundingMode.HALF_EVEN)).doubleValue() == 0.0){
-                return "HSR - ALTA("+aux+")";
+        while (i - 5 * aux > 0) {
+            if ((valores.get(i) < valores.get(i - 1 * aux)) && (valores.get(i - 1 * aux) > valores.get(i - 2 * aux)) && (valores.get(i - 2 * aux) < valores.get(i - 3 * aux)) && (valores.get(i - 3 * aux) > valores.get(i - 4 * aux)) && (valores.get(i - 4 * aux) < valores.get(i - 5 * aux)) &&
+                    (new BigDecimal(valores.get(i - 2 * aux) - valores.get(i - 4 * aux)).setScale(1, RoundingMode.HALF_EVEN)).doubleValue() == 0.0) {
+                return "HSR - ALTA(" + aux + ")";
             }
             aux++;
         }
 
         return "HSR - NÃO ENCONTRADO";
     }
-    public String cunhaDeBaixaPattern(List<Double> valores){
-        int i = valores.size() -1;
+
+    public String cunhaDeBaixaPattern(List<Double> valores) {
+        int i = valores.size() - 1;
         int aux = 1;
-        while(i - 9*aux > 0){
-            if((valores.get(i) > valores.get(i-1*aux)) && (valores.get(i-1*aux) < valores.get(i-2*aux)) && (valores.get(i-2*aux) > valores.get(i-3*aux)) && (valores.get(i-3*aux) < valores.get(i-4*aux)) && (valores.get(i-4*aux) > valores.get(i-5*aux)) &&
-                    (valores.get(i-5*aux) < valores.get(i-6*aux)) && (valores.get(i-6*aux) > valores.get(i-7*aux)) && (valores.get(i-7*aux) < valores.get(i-8*aux))
-                    && ((valores.get(i) < valores.get(i-2*aux)) && (valores.get(i-2*aux) < valores.get(i-4*aux)) && (valores.get(i-4*aux) < valores.get(i-6*aux)) && (valores.get(i-6*aux) < valores.get(i-8*aux)))){
-                return "CUNHA DE BAIXA - ALTA("+aux+")";
+        while (i - 9 * aux > 0) {
+            if ((valores.get(i) > valores.get(i - 1 * aux)) && (valores.get(i - 1 * aux) < valores.get(i - 2 * aux)) && (valores.get(i - 2 * aux) > valores.get(i - 3 * aux)) && (valores.get(i - 3 * aux) < valores.get(i - 4 * aux)) && (valores.get(i - 4 * aux) > valores.get(i - 5 * aux)) &&
+                    (valores.get(i - 5 * aux) < valores.get(i - 6 * aux)) && (valores.get(i - 6 * aux) > valores.get(i - 7 * aux)) && (valores.get(i - 7 * aux) < valores.get(i - 8 * aux))
+                    && ((valores.get(i) < valores.get(i - 2 * aux)) && (valores.get(i - 2 * aux) < valores.get(i - 4 * aux)) && (valores.get(i - 4 * aux) < valores.get(i - 6 * aux)) && (valores.get(i - 6 * aux) < valores.get(i - 8 * aux)))) {
+                return "CUNHA DE BAIXA - ALTA(" + aux + ")";
             }
             aux++;
         }
@@ -592,57 +989,58 @@ public class TesteService {
         return "CUNHA DE BAIXA - NÃO ENCONTRADO";
     }
 
-    public String trinaguloDeReversaoPattern(List<Double> valores){
-        int i = valores.size() -1;
+    public String trinaguloDeReversaoPattern(List<Double> valores) {
+        int i = valores.size() - 1;
         int aux = 1;
-        while(i - 9*aux > 0){
-            if((valores.get(i) < valores.get(i-1*aux)) && (valores.get(i-1*aux) > valores.get(i-2*aux)) && (valores.get(i-2*aux) < valores.get(i-3*aux)) && (valores.get(i-3*aux) > valores.get(i-4*aux)) && (valores.get(i-4*aux) < valores.get(i-5*aux)) &&
-                    (valores.get(i-5*aux) > valores.get(i-6*aux)) && (valores.get(i-6*aux) < valores.get(i-7*aux)) && (valores.get(i-7*aux) > valores.get(i-8*aux))
-                    && ((valores.get(i) > valores.get(i-2*aux)) && (valores.get(i-2*aux) > valores.get(i-4*aux)) && (valores.get(i-4*aux) > valores.get(i-6*aux)) && (valores.get(i-6*aux) > valores.get(i-8*aux)))){
-                return "TRI. REV. - BAIXA("+aux+")";
+        while (i - 9 * aux > 0) {
+            if ((valores.get(i) < valores.get(i - 1 * aux)) && (valores.get(i - 1 * aux) > valores.get(i - 2 * aux)) && (valores.get(i - 2 * aux) < valores.get(i - 3 * aux)) && (valores.get(i - 3 * aux) > valores.get(i - 4 * aux)) && (valores.get(i - 4 * aux) < valores.get(i - 5 * aux)) &&
+                    (valores.get(i - 5 * aux) > valores.get(i - 6 * aux)) && (valores.get(i - 6 * aux) < valores.get(i - 7 * aux)) && (valores.get(i - 7 * aux) > valores.get(i - 8 * aux))
+                    && ((valores.get(i) > valores.get(i - 2 * aux)) && (valores.get(i - 2 * aux) > valores.get(i - 4 * aux)) && (valores.get(i - 4 * aux) > valores.get(i - 6 * aux)) && (valores.get(i - 6 * aux) > valores.get(i - 8 * aux)))) {
+                return "TRI. REV. - BAIXA(" + aux + ")";
             }
             aux++;
         }
 
         return "TRI. REV. - NÃO ENCONTRADO";
     }
-    public String cestoBasePattern(List<Double> valores, List<String> data){
+
+    public String cestoBasePattern(List<Double> valores, List<Double> data) {
         int i = valores.size() - 2;
         Double valorAtual = valores.get(i);
         Integer indexOcorrenciaAnterior = null;
         int quantidadeElementos = 1;
-        for(int j = i-1; j>-1; j--){
+        for (int j = i - 1; j > -1; j--) {
             quantidadeElementos++;
-            if(valores.get(j).doubleValue() > valorAtual.doubleValue()){
+            if (valores.get(j).doubleValue() > valorAtual.doubleValue()) {
                 indexOcorrenciaAnterior = j;
                 break;
             }
         }
-        if(quantidadeElementos != 1 && indexOcorrenciaAnterior != null){
+        if (quantidadeElementos != 1 && indexOcorrenciaAnterior != null) {
             int aux = 1;
-            while (aux < quantidadeElementos-1){
-                if(quantidadeElementos%aux == 0){
+            while (aux < quantidadeElementos - 1) {
+                if (quantidadeElementos % aux == 0) {
                     int quantidadeSubida = 0;
                     int quantidadeDescida = 0;
                     Double minValue = 0d;
-                    for(int j = indexOcorrenciaAnterior; j < valores.size() - 1; j+=aux){
-                        if((valores.get(j).doubleValue() < minValue.doubleValue()) || minValue.doubleValue() == 0d){
+                    for (int j = indexOcorrenciaAnterior; j < valores.size() - 1; j += aux) {
+                        if ((valores.get(j).doubleValue() < minValue.doubleValue()) || minValue.doubleValue() == 0d) {
                             minValue = valores.get(j);
                         }
-                        if(j+aux < i &&
-                                valores.get(j).doubleValue() < valores.get(j+aux).doubleValue() &&
-                            (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
-                            (valores.get(j+aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j+aux).doubleValue() <= valorAtual.doubleValue())){
+                        if (j + aux < i &&
+                                valores.get(j).doubleValue() < valores.get(j + aux).doubleValue() &&
+                                (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
+                                (valores.get(j + aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j + aux).doubleValue() <= valorAtual.doubleValue())) {
                             quantidadeSubida++;
-                        } else if(  j+aux < i &&
-                                    valores.get(j).doubleValue() > valores.get(j+aux).doubleValue() &&
-                                    (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
-                                    (valores.get(j+aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j+aux).doubleValue() <= valorAtual.doubleValue())) {
+                        } else if (j + aux < i &&
+                                valores.get(j).doubleValue() > valores.get(j + aux).doubleValue() &&
+                                (valores.get(j).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j).doubleValue() <= valorAtual.doubleValue()) &&
+                                (valores.get(j + aux).doubleValue() <= valores.get(indexOcorrenciaAnterior).doubleValue() || valores.get(j + aux).doubleValue() <= valorAtual.doubleValue())) {
                             quantidadeDescida++;
                         }
                     }
-                    if(quantidadeSubida > 0 && quantidadeDescida > 0 && minValue.doubleValue() < valorAtual.doubleValue()){
-                        return "CESTO BASE - ALTA("+data.get(indexOcorrenciaAnterior)+","+aux+","+data.get(i+1)+")";
+                    if (quantidadeSubida > 0 && quantidadeDescida > 0 && minValue.doubleValue() < valorAtual.doubleValue()) {
+                        return "CESTO BASE - ALTA(" + data.get(indexOcorrenciaAnterior) + "," + aux + "," + data.get(i + 1) + ")";
                     }
                 }
                 aux++;
@@ -652,34 +1050,35 @@ public class TesteService {
         return "CESTO BASE - NÃO ENCONTRADO";
     }
 
-    public String predicaoPolinomial(List<Double> variacaoValores, List<Double> variacaoVolume){
+    public String predicaoPolinomial(List<Double> variacaoValores, List<Double> variacaoVolume) {
         int quantZeros = variacaoVolume.stream().filter(x -> x.equals(0)).collect(Collectors.toList()).size();
-        quantZeros = (variacaoVolume.get(variacaoVolume.size()-1)).equals(0) ? (quantZeros-1) : quantZeros;
+        quantZeros = (variacaoVolume.get(variacaoVolume.size() - 1)).equals(0) ? (quantZeros - 1) : quantZeros;
         List<Double> zerosFunc = new ArrayList<>();
-        if(quantZeros > 0){
-            for(int i = 0; i < variacaoVolume.size(); i++){
-                if(variacaoVolume.get(i).equals(0)){
+        if (quantZeros > 0) {
+            for (int i = 0; i < variacaoVolume.size(); i++) {
+                if (variacaoVolume.get(i).equals(0)) {
                     zerosFunc.add(variacaoValores.get(i));
                 }
             }
             Double valorAtual = Double.valueOf(1.0);
             Double valorImediatamenteAnterior = Double.valueOf(1.0);
-            for (int i = 0; i < zerosFunc.size(); i++){
-                valorAtual = valorAtual*(variacaoValores.get(variacaoValores.size()-1) - zerosFunc.get(i));
-                valorImediatamenteAnterior = valorImediatamenteAnterior*((variacaoValores.get(variacaoValores.size()-1)-0.000000000000001) - zerosFunc.get(i));
+            for (int i = 0; i < zerosFunc.size(); i++) {
+                valorAtual = valorAtual * (variacaoValores.get(variacaoValores.size() - 1) - zerosFunc.get(i));
+                valorImediatamenteAnterior = valorImediatamenteAnterior * ((variacaoValores.get(variacaoValores.size() - 1) - 0.000000000000001) - zerosFunc.get(i));
             }
-            return "PREDICAO POLINOMIAL - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+") ("+String.valueOf(quantZeros)+")";
-        }else{
-            return "PREDICAO POLINOMIAL - NÃO ENCONTRADO ("+String.valueOf(quantZeros)+")";
+            return "PREDICAO POLINOMIAL - (" + 0.000000000000001 / (valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue()) + ") (" + String.valueOf(quantZeros) + ")";
+        } else {
+            return "PREDICAO POLINOMIAL - NÃO ENCONTRADO (" + String.valueOf(quantZeros) + ")";
         }
     }
-    public String predicaoPolinomialLagrange(List<Double> variacaoValores, List<Double> variacaoVolume){
+
+    public Double predicaoPolinomialLagrange(List<Double> variacaoValores, List<Double> variacaoVolume) {
         Double valorAtual = Double.valueOf(0.0);
         Double valorImediatamenteAnterior = Double.valueOf(0.0);
-        for(int i = 0; i < variacaoVolume.size(); i++){
-            Double incrementoAtual = lagrange(variacaoValores.get(variacaoValores.size()-1), variacaoValores, i)*variacaoVolume.get(i);
+        for (int i = 0; i < variacaoVolume.size(); i++) {
+            Double incrementoAtual = lagrange(variacaoValores.get(variacaoValores.size() - 1), variacaoValores, i) * variacaoVolume.get(i);
             valorAtual += Double.isNaN(incrementoAtual) ? Double.valueOf(0.0) : incrementoAtual;
-            Double incrementoAnterior = lagrange(variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, variacaoValores, i)*variacaoVolume.get(i);
+            Double incrementoAnterior = lagrange(variacaoValores.get(variacaoValores.size() - 1) - 0.0000000000001, variacaoValores, i) * variacaoVolume.get(i);
             valorImediatamenteAnterior += Double.isNaN(incrementoAnterior) ? Double.valueOf(0.0) : incrementoAnterior;
         }
         /*Double valorAtualToMax = valorAtual;
@@ -704,29 +1103,29 @@ public class TesteService {
             }
         }*/
 
-        return "PREDICAO POLINOMIAL LAGRANGE - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
+        return 0.0000000000001 / (valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue());
     }
 
     private Double lagrange(Double valorXAtual, List<Double> variacaoValores, int index) {
         Double retorno = Double.valueOf(1.0);
-        for(int i = 0; i < variacaoValores.size(); i++){
-            if(i != index){
-                if(variacaoValores.get(index) - variacaoValores.get(i) != 0) {
-                    retorno = retorno*((valorXAtual - variacaoValores.get(i))/(variacaoValores.get(index) - variacaoValores.get(i)));
+        for (int i = 0; i < variacaoValores.size(); i++) {
+            if (i != index) {
+                if (variacaoValores.get(index) - variacaoValores.get(i) != 0) {
+                    retorno = retorno * ((valorXAtual - variacaoValores.get(i)) / (variacaoValores.get(index) - variacaoValores.get(i)));
                 }
             }
         }
         return retorno;
     }
 
-    public String predicaoPolinomialNewton(List<Double> variacaoValores, List<Double> variacaoVolume){
+    public Double predicaoPolinomialNewton(List<Double> variacaoValores, List<Double> variacaoVolume) {
         Double valorAtual = Double.valueOf(variacaoVolume.get(0));
         Double valorImediatamenteAnterior = Double.valueOf(variacaoVolume.get(0));
-        for(int i = 0; i < variacaoVolume.size(); i++){
-            Double incrementoAtual = newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1), i);
-            valorAtual += Double.isNaN(incrementoAtual) ? Double.valueOf(0.0):incrementoAtual;
-            Double incrementoAnterior = newton(variacaoValores, variacaoVolume, i)*multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size()-1)-0.000000000000001, i);
-            valorImediatamenteAnterior += Double.isNaN(incrementoAnterior) ? Double.valueOf(0.0):incrementoAnterior;
+        for (int i = 0; i < variacaoVolume.size(); i++) {
+            Double incrementoAtual = newton(variacaoValores, variacaoVolume, i) * multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size() - 1), i);
+            valorAtual += Double.isNaN(incrementoAtual) ? Double.valueOf(0.0) : incrementoAtual;
+            Double incrementoAnterior = newton(variacaoValores, variacaoVolume, i) * multiplicador(variacaoValores, variacaoValores.get(variacaoValores.size() - 1) - 0.0000000000001, i);
+            valorImediatamenteAnterior += Double.isNaN(incrementoAnterior) ? Double.valueOf(0.0) : incrementoAnterior;
         }
         /*Double valorAtualToMax = valorAtual;
         Double valorMax = Double.valueOf(0.0);
@@ -749,68 +1148,159 @@ public class TesteService {
                 valorVariacaoReferencia += 0.001;
             }
         }*/
-        return "PREDICAO POLINOMIAL NEWTON - ("+0.000000000000001/(valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue())+")";
+        return 0.0000000000001 / (valorAtual.doubleValue() - valorImediatamenteAnterior.doubleValue());
     }
 
-    public Double multiplicador(List<Double> variacaoValores, Double valorXAtual, int index){
+    public Double multiplicador(List<Double> variacaoValores, Double valorXAtual, int index) {
         Double retorno = Double.valueOf(1);
-        if(index == 0){
+        if (index == 0) {
             return retorno;
         }
-        for(int i = 0; i < index; i++){
-            retorno = retorno*(valorXAtual - variacaoValores.get(i));
+        for (int i = 0; i < index; i++) {
+            retorno = retorno * (valorXAtual - variacaoValores.get(i));
         }
         return retorno;
     }
-    public Double newton(List<Double> variacaoValores, List<Double> variacaoVolumes, int index){
-        if(index == 0){
+
+    public Double newton(List<Double> variacaoValores, List<Double> variacaoVolumes, int index) {
+        if (index == 0) {
             /*contadorRecursao++;
         	System.out.println(contadorRecursao);*/
             return Double.valueOf(variacaoVolumes.get(0));
-        }else{
+        } else {
             Double valorFinal = variacaoValores.get(variacaoValores.size() - 1);
             Double valorInicial = variacaoValores.get(0);
-            List<Double> novaVariacaoValoresDireita = variacaoValores.subList(0, variacaoValores.size()-1);
-            List<Double> novaVariacaoVolumesDireita = variacaoVolumes.subList(0, variacaoVolumes.size()-1);
+            List<Double> novaVariacaoValoresDireita = variacaoValores.subList(0, variacaoValores.size() - 1);
+            List<Double> novaVariacaoVolumesDireita = variacaoVolumes.subList(0, variacaoVolumes.size() - 1);
             List<Double> novaVariacaoValoresEsquerda = variacaoValores.subList(1, variacaoValores.size());
             List<Double> novaVariacaoVolumesEsquerda = variacaoVolumes.subList(1, variacaoVolumes.size());
-            if((valorFinal.doubleValue() - valorInicial.doubleValue()) != 0) {
-                return((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index -1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index -1).doubleValue())/
-                         (valorFinal.doubleValue() - valorInicial.doubleValue()));
-            }else {
+            if ((valorFinal.doubleValue() - valorInicial.doubleValue()) != 0) {
+                return ((newton(novaVariacaoValoresEsquerda, novaVariacaoVolumesEsquerda, index - 1).doubleValue() - newton(novaVariacaoValoresDireita, novaVariacaoVolumesDireita, index - 1).doubleValue()) /
+                        (valorFinal.doubleValue() - valorInicial.doubleValue()));
+            } else {
                 return 1.0;
             }
-           
+
         }
     }
 
 
-    public List<String> comparar(List<String> maisAtivos, List<String> maisGanhos){
+    public List<String> comparar(List<String> maisAtivos, List<String> maisGanhos) {
         List<String> retorno = new ArrayList<>();
         maisAtivos.stream().forEach(x -> {
-            if(maisGanhos.contains(x)){
+            if (maisGanhos.contains(x)) {
                 retorno.add(x);
             }
         });
         return retorno;
     }
 
-    public void processaOdds(String html){
+    public void processaOdds(String html) {
         List<String> casasConfiaveis = Arrays.stream(new String[]{"Bet365", "Betnacional", "Bodog", "SportingBet", "PixBet", "Esportedasorte", "Betano", "1xBet", "Betfair", "PingolBet"}).collect(Collectors.toList());
         Document document = Jsoup.parse(html);
         Elements linksGoogle = document.select("div[class*=cursor-pointer border rounded-md mb-4 px-1 py-2 flex flex-col lg:flex-row relative]");
         /*((TextNode) element.childNode(1).childNode(1).childNode(0)).text().contains("31 mar") &&*/
         List<Element> filtrado = linksGoogle.stream().filter(element ->
                 Double.valueOf(((TextNode) element.childNode(3).childNode(1).childNode(5).childNode(0)).text()) > 2 &&
-                Double.valueOf(((TextNode) element.childNode(3).childNode(3).childNode(5).childNode(0)).text()) > 2 &&
-                casasConfiaveis.contains(element.childNode(3).childNode(1).childNode(3).attr("alt")) &&
-                casasConfiaveis.contains(element.childNode(3).childNode(3).childNode(3).attr("alt"))).collect(Collectors.toList());
+                        Double.valueOf(((TextNode) element.childNode(3).childNode(3).childNode(5).childNode(0)).text()) > 2 &&
+                        casasConfiaveis.contains(element.childNode(3).childNode(1).childNode(3).attr("alt")) &&
+                        casasConfiaveis.contains(element.childNode(3).childNode(3).childNode(3).attr("alt"))).collect(Collectors.toList());
 
         filtrado.forEach(element -> {
             System.out.println(((TextNode) element.childNode(1).childNode(3).childNode(1).childNode(0)).text()
-                                + " / " + ((TextNode) element.childNode(3).childNode(1).childNode(5).childNode(0)).text() + " - " + ((TextNode) element.childNode(3).childNode(3).childNode(5).childNode(0)).text()
-                                + " / " + element.childNode(3).childNode(1).childNode(3).attr("alt") + " - " + element.childNode(3).childNode(3).childNode(3).attr("alt"));
+                    + " / " + ((TextNode) element.childNode(3).childNode(1).childNode(5).childNode(0)).text() + " - " + ((TextNode) element.childNode(3).childNode(3).childNode(5).childNode(0)).text()
+                    + " / " + element.childNode(3).childNode(1).childNode(3).attr("alt") + " - " + element.childNode(3).childNode(3).childNode(3).attr("alt"));
         });
 
+    }
+
+    private List<Map<String, Object>> getFreeProxies(WebDriver driver) {
+        driver.get("https://sslproxies.org");
+
+        WebElement table = driver.findElement(By.tagName("table"));
+        List<WebElement> thead = table.findElement(By.tagName("thead")).findElements(By.tagName("th"));
+        List<WebElement> tbody = table.findElement(By.tagName("tbody")).findElements(By.tagName("tr"));
+
+        List<String> headers = new ArrayList<>();
+        for(WebElement th : thead) {
+            headers.add(th.getText().strip());
+        }
+
+        List<Map<String, Object>> proxies = new ArrayList<>();
+        for(WebElement tr : tbody){
+            Map<String, Object> proxyData = new HashMap<>();
+            List<WebElement> tds = tr.findElements(By.tagName("td"));
+            for(int i = 0; i < headers.size(); i++){
+                proxyData.put(headers.get(i), tds.get(i).getText().strip());
+                proxies.add(proxyData);
+            }
+        }
+        driver.close();
+        return proxies;
+//        return proxies.stream().filter(val -> Arrays.asList("US", "Singapura", "India").contains(val.get("Country").toString().equals("US")) && !val.get("Last Checked").toString().contains("hours")).collect(Collectors.toList());
+//        return proxies.stream().filter(val -> !val.get("Last Checked").toString().contains("hours")).collect(Collectors.toList());
+    }
+
+    public ChromeOptions chromeOptionsSemHeadLess(){
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments(new String[]{"--remote-allow-origins=*"});
+        chromeOptions.addArguments(new String[]{"test-type"});
+        chromeOptions.addArguments(new String[]{"start-maximized"});
+        chromeOptions.addArguments(new String[]{"disable-web-security"});
+        chromeOptions.addArguments(new String[]{"allow-running-insecure-content"});
+        chromeOptions.addArguments(new String[]{"--log-level=3"});
+        chromeOptions.addArguments(new String[]{"--ignore-ssl-errors=yes"});
+        chromeOptions.addArguments(new String[]{"--ignore-certificate-errors"});
+        chromeOptions.addArguments(new String[]{"--kiosk-printing"});
+        chromeOptions.addArguments(new String[]{"--lang=pt-BR"});
+        chromeOptions.addArguments(new String[]{"--disable-gpu"});
+        chromeOptions.addArguments(new String[]{"--disable-dev-shm-usage"});
+        chromeOptions.addArguments(new String[]{"--no-sandbox"});
+        chromeOptions.addArguments(new String[]{"--disable-session-crashed-bubble"});
+        chromeOptions.addArguments(new String[]{"--no-sandbox"});
+        chromeOptions.addArguments(new String[]{"--disable-dev-shm-usage"});
+        chromeOptions.addArguments(new String[]{"--disable-blink-features=AutomationControlled"});
+        chromeOptions.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+        chromeOptions.setExperimentalOption("useAutomationExtension", (Object) null);
+        chromeOptions.setUnhandledPromptBehaviour(UnexpectedAlertBehaviour.IGNORE);
+        chromeOptions.setAcceptInsecureCerts(true);
+
+        return chromeOptions;
+    }
+
+    public ChromeOptions chromeOptionsComHeadLess(){
+        ChromeOptions chromeOptionsToProxy = new ChromeOptions();
+        chromeOptionsToProxy.addArguments(new String[]{"--remote-allow-origins=*"});
+        chromeOptionsToProxy.addArguments(new String[]{"test-type"});
+        chromeOptionsToProxy.addArguments(new String[]{"start-maximized"});
+        chromeOptionsToProxy.addArguments(new String[]{"disable-web-security"});
+        chromeOptionsToProxy.addArguments(new String[]{"allow-running-insecure-content"});
+        chromeOptionsToProxy.addArguments(new String[]{"--log-level=3"});
+        chromeOptionsToProxy.addArguments(new String[]{"--ignore-ssl-errors=yes"});
+        chromeOptionsToProxy.addArguments(new String[]{"--ignore-certificate-errors"});
+        chromeOptionsToProxy.addArguments(new String[]{"--kiosk-printing"});
+        chromeOptionsToProxy.addArguments(new String[]{"--lang=pt-BR"});
+        chromeOptionsToProxy.addArguments(new String[]{"--disable-gpu"});
+        chromeOptionsToProxy.addArguments(new String[]{"--disable-dev-shm-usage"});
+        chromeOptionsToProxy.addArguments(new String[]{"--no-sandbox"});
+        chromeOptionsToProxy.addArguments(new String[]{"--disable-session-crashed-bubble"});
+        chromeOptionsToProxy.addArguments(new String[]{"--no-sandbox"});
+        chromeOptionsToProxy.addArguments(new String[]{"--disable-dev-shm-usage"});
+        chromeOptionsToProxy.addArguments(new String[]{"--disable-blink-features=AutomationControlled"});
+        chromeOptionsToProxy.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+        chromeOptionsToProxy.setExperimentalOption("useAutomationExtension", (Object) null);
+        chromeOptionsToProxy.setUnhandledPromptBehaviour(UnexpectedAlertBehaviour.IGNORE);
+        chromeOptionsToProxy.setAcceptInsecureCerts(true);
+        chromeOptionsToProxy.addArguments("--headless");
+
+        return chromeOptionsToProxy;
+    }
+
+
+    public static void main(String[] args) {
+        double value = 11.18;
+        double variacaoEstimada = -0.0020639 * Math.pow(value, 2.0) + 0.1023252 * value + 0.1423548;
+        System.out.println(variacaoEstimada);
+        System.out.println(value * (1 + variacaoEstimada / 100));
     }
 }
