@@ -155,9 +155,20 @@ public class TesteController {
 
     @GetMapping("/coinBase")
     public void analiseCoinCoinBase() {
-    List <String> endpointsAvaliado = Arrays.asList("ethereum", "bonk", "binaryx-new", "fusionist", "ether-fi-ethfi", "ankr", "pendle", "polygon", "omni", "pepe", "floki-inu", "saga", "polygon", "adventure-gold", "xrp", "render", "dogwifhat", "book-of-meme", "bitcoin", "dogecoin", "cardano", "shiba-inu", "polkadot", "near-protocol", "mantle", "stacks", "aptos", "aave-uni-v2", "internet-computer", "tron", "solana", "uniswap", "litecoin", "chainlink", "solana", "bitcoin-cash", "aave", "polkadot", "avalanche", "stellar", "arbitrum", "optimism", "standard-tokenization-protocol", "golem", "raydium", "audius", "worldcoin-org", "harvest-finance");
-        Map<String, String> resultado = new HashMap<>();
-        testeService.analiseCoinCoinbase(endpointsAvaliado, resultado, true);
+
+        Timer timer = new Timer();
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                List <String> endpointsAvaliado = Arrays.asList("ethereum", "bonk", "binaryx-new", "fusionist", "ether-fi-ethfi", "ankr", "pendle", "polygon", "omni", "pepe", "floki-inu", "saga", "polygon", "adventure-gold", "xrp", "render", "dogwifhat", "book-of-meme", "bitcoin", "dogecoin", "cardano", "shiba-inu", "polkadot", "near-protocol", "mantle", "stacks", "aptos", "aave-uni-v2", "internet-computer", "tron", "solana", "uniswap", "litecoin", "chainlink", "solana", "bitcoin-cash", "aave", "polkadot", "avalanche", "stellar", "arbitrum", "optimism", "standard-tokenization-protocol", "golem", "raydium", "audius", "worldcoin-org", "harvest-finance");
+                Map<String, String> resultado = new HashMap<>();
+                testeService.analiseCoinCoinbase(endpointsAvaliado, resultado, false);
+            }
+        };
+        // Agende a tarefa para ser executada a cada 30 minutos
+        timer.schedule(task, 0, 30 * 60 * 1000);
+
 //        for (Map.Entry<String, String> entry : resultado.entrySet()) {
 //            System.out.println("=> " + entry.getKey() + "=" + entry.getValue());
 //        }
@@ -208,7 +219,7 @@ public class TesteController {
 
         List<String> endpointsAvaliado = Arrays.asList(moedas.split(","));
         Map<String, String> resultado = new HashMap<>();
-        testeService.analiseCoinCoinbase(endpointsAvaliado, resultado, true);
+        testeService.analiseCoinCoinbase(endpointsAvaliado, resultado, false);
 //        System.out.println("==========================================================ANALISE=================================================================");
 //        for (Map.Entry<String, String> entry : resultado.entrySet()) {
 //            System.out.println("=> " + entry.getKey() + "=" + entry.getValue());
