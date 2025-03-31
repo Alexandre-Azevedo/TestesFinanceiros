@@ -698,7 +698,7 @@ public class TesteService {
         });
     }
 
-    public void analiseCoinCoinbase(List<String> nomesMoedas, Map<String, String> mapResultado, Boolean usarProxy) {
+    public void analiseCoinCoinbase(List<String> nomesMoedas, Map<String, String> mapResultado, Boolean usarProxy, Boolean filtrarDados) {
         ChromeOptions chromeOptionsToProxy = null;
         List<Map<String, Object>> proxies = null;
         if (usarProxy) {
@@ -758,7 +758,17 @@ public class TesteService {
                         if (wait.until(ExpectedConditions.elementToBeClickable(By.xpath(buttonToClick))).getAttribute("style").contains("rgb")) {
                             break;
                         }
-                        elementClicSemana2.click();
+                        for(int j = 0; j < 3; j++){
+                            try {
+                                elementClicSemana2.click();
+                                break;
+                            } catch (Exception ex){
+                                elementClicSemana2 = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(buttonToClick)));
+                                if(j==2){
+                                    throw ex;
+                                }
+                            }
+                        }
                     }
                     List<WebElement> elements = null;
                     WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div > svg > g > path:nth-child(1)")));
@@ -819,15 +829,17 @@ public class TesteService {
 
                     Boolean isAproveitavel = true;
                     Integer isAproveitavelNum = 0;
-                    for (int i = 0; i < valores.size(); i++) {
-                        double auxVariacao = variacaoVolume.get(i) - polynomialFunction.value(valores.get(i));
-                        if (auxVariacao < 0) {
-                            auxVariacao = -auxVariacao;
-                        }
-                        if (auxVariacao > 50) {
-                            isAproveitavel = false;
-                            isAproveitavelNum += 1;
-                            break;
+                    if(filtrarDados) {
+                        for (int i = 0; i < valores.size(); i++) {
+                            double auxVariacao = variacaoVolume.get(i) - polynomialFunction.value(valores.get(i));
+                            if (auxVariacao < 0) {
+                                auxVariacao = -auxVariacao;
+                            }
+                            if (auxVariacao > 50) {
+                                isAproveitavel = false;
+                                isAproveitavelNum += 1;
+                                break;
+                            }
                         }
                     }
                     Double derivada = null;
@@ -839,7 +851,7 @@ public class TesteService {
                         SimpleDateFormat formatoDataHora = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
                         String dataHoraFormatada = formatoDataHora.format(dataAtual);
 
-                        mapResultado.put(nm, mapResultado.get(nm) + " | valor: " + chromeWebDriver.findElement(By.xpath("//*[@id=\"PriceSection\"]/div[1]/div[1]/div[1]/div[1]/div[2]/div/span")).getText() + " | DATA: " + dataHoraFormatada);
+                        mapResultado.put(nm, mapResultado.get(nm) + " | valor: " + chromeWebDriver.findElement(By.xpath("//*[contains(@class,'PriceTickerContainer')]")).getAttribute("data-value") + " | DATA: " + dataHoraFormatada);
                         System.out.println("=> " + nm + "=" + mapResultado.get(nm));
 //                        if(derivada < 2 && derivada > 0 && polynomialFunction.polynomialDerivative().derivative().value(valores.get(valores.size() - 1)) > 0) {
 //                            for (int i = 1; i < 1000000; i++) {
@@ -902,6 +914,7 @@ public class TesteService {
                 }
                 chromeWebDriver.close();
             } catch (Exception e) {
+                e.printStackTrace();
                 proxyTestado.set(null);
                 chromeWebDriver.close();
             }
